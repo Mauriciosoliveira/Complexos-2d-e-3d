@@ -2,176 +2,303 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Plano Interativo - Adicionar e Remover Objetos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plano Complexo e Espaço R³ Interativo</title>
+  <!-- Biblioteca Plotly.js para gráficos 2D e 3D -->
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    .controles {
-      margin-bottom: 15px;
-      display: flex;
-      gap: 10px;
-    }
-    button {
-      padding: 10px 15px;
-      font-size: 14px;
-      cursor: pointer;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background-color: #f0f0f0;
-    }
-    button:hover {
-      background-color: #e0e0e0;
-    }
-    button.btn-danger {
-      background-color: #ff4d4d;
-      color: white;
-      border: none;
-    }
-    button.btn-danger:hover {
-      background-color: #cc0000;
-    }
-    /* Área do Plano */
-    #plano {
-      width: 800px;
-      height: 500px;
-      border: 2px dashed #888;
-      background-color: #fafafa;
-      position: relative;
-      overflow: hidden;
-    }
-    /* Estilo dos objetos no plano */
-    .objeto {
-      position: absolute;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      user-select: none;
-      cursor: move;
-      border-radius: 6px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .objeto.mesa {
-      width: 100px;
-      height: 60px;
-      background-color: #4A90E2;
-    }
-    .objeto.cadeira {
-      width: 40px;
-      height: 40px;
-      background-color: #50E3C2;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
       color: #333;
+      margin: 0;
+      padding: 20px;
     }
-    /* Objeto selecionado */
-    .objeto.selecionado {
-      outline: 3px solid #ff9900;
+    h1 {
+      text-align: center;
+      color: #1a252f;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 850px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .controls {
+      background: #f8f9fa;
+      padding: 18px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    .input-group {
+      margin-bottom: 12px;
+    }
+    .input-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 5px;
+      font-size: 0.9em;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    .btn {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    .btn-add {
+      background-color: #2563eb;
+      color: white;
+      margin-top: 5px;
+    }
+    .btn-add:hover {
+      background-color: #1d4ed8;
+    }
+    .btn-remove {
+      background-color: #ef4444;
+      color: white;
+      padding: 4px 8px;
+      font-size: 0.8em;
+      width: auto;
+      border-radius: 4px;
+    }
+    .btn-remove:hover {
+      background-color: #dc2626;
+    }
+    .list {
+      margin-top: 15px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 0.9em;
+    }
+    .plot-area {
+      width: 100%;
+      height: 500px;
     }
   </style>
 </head>
 <body>
 
-  <h2>Plano Interativo</h2>
+  <div class="container">
+    <h1>Visualizador Interativo: Plano Complexo & R³</h1>
 
-  <div class="controles">
-    <button onclick="adicionarObjeto('mesa')">+ Adicionar Mesa</button>
-    <button onclick="adicionarObjeto('cadeira')">+ Adicionar Cadeira</button>
-    <button class="btn-danger" onclick="removerSelecionado()">- Remover Selecionado</button>
-    <button onclick="limparPlano()">Limpar Tudo</button>
+    <!-- SEÇÃO 1: PLANO COMPLEXO (2D) -->
+    <div class="card">
+      <h2>1. Plano Complexo (Argand-Gauss)</h2>
+      <div class="grid">
+        <div class="controls">
+          <h3>Adicionar Número ($z = a + bi$)</h3>
+          <div class="input-group">
+            <label for="c-re">Parte Real ($a$):</label>
+            <input type="number" id="c-re" value="3" step="any">
+          </div>
+          <div class="input-group">
+            <label for="c-im">Parte Imaginária ($b$):</label>
+            <input type="number" id="c-im" value="4" step="any">
+          </div>
+          <button class="btn btn-add" onclick="adicionarComplexo()">+ Adicionar no Plano</button>
+
+          <h4>Números no Plano:</h4>
+          <div id="lista-complexos" class="list"></div>
+        </div>
+
+        <div id="plot-complexo" class="plot-area"></div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 2: ESPAÇO R3 (3D) -->
+    <div class="card">
+      <h2>2. Espaço Tridimensional ($\mathbb{R}^3$)</h2>
+      <div class="grid">
+        <div class="controls">
+          <h3>Adicionar Ponto/Vetores ($x, y, z$)</h3>
+          <div class="input-group">
+            <label for="r3-x">Coordenada X:</label>
+            <input type="number" id="r3-x" value="2" step="any">
+          </div>
+          <div class="input-group">
+            <label for="r3-y">Coordenada Y:</label>
+            <input type="number" id="r3-y" value="3" step="any">
+          </div>
+          <div class="input-group">
+            <label for="r3-z">Coordenada Z:</label>
+            <input type="number" id="r3-z" value="4" step="any">
+          </div>
+          <button class="btn btn-add" onclick="adicionar3D()">+ Adicionar no R³</button>
+
+          <h4>Pontos no R³:</h4>
+          <div id="lista-3d" class="list"></div>
+        </div>
+
+        <div id="plot-3d" class="plot-area"></div>
+      </div>
+    </div>
   </div>
 
-  <div id="plano"></div>
-
   <script>
-    const plano = document.getElementById('plano');
-    let objetoSelecionado = null;
-    let contador = 0;
+    // --- LÓGICA DO PLANO COMPLEXO ---
+    let complexos = [
+      { id: 1, re: 3, im: 4 },
+      { id: 2, re: -2, im: 3 }
+    ];
 
-    // Função para adicionar objetos ao plano
-    function adicionarObjeto(tipo) {
-      contador++;
-      const el = document.createElement('div');
-      el.classList.add('objeto', tipo);
-      el.innerText = `${tipo.toUpperCase()} ${contador}`;
+    function renderComplexos() {
+      const listEl = document.getElementById('lista-complexos');
+      listEl.innerHTML = '';
       
-      // Posição inicial no centro do plano
-      el.style.left = '50px';
-      el.style.top = '50px';
+      const traces = [];
 
-      // Evento de seleção
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selecionarObjeto(el);
+      complexos.forEach((c, index) => {
+        const sinal = c.im >= 0 ? '+' : '';
+        const label = `z${index+1} = ${c.re} ${sinal} ${c.im}i`;
+
+        // Item na lista lateral
+        const item = document.createElement('div');
+        item.className = 'list-item';
+        item.innerHTML = `
+          <span><b>${label}</b></span>
+          <button class="btn btn-remove" onclick="removerComplexo(${c.id})">Remover</button>
+        `;
+        listEl.appendChild(item);
+
+        // Traço do vetor da origem (0,0) até (re, im)
+        traces.push({
+          x: [0, c.re],
+          y: [0, c.im],
+          mode: 'lines+markers',
+          type: 'scatter',
+          name: label,
+          marker: { size: [0, 8] },
+          line: { width: 3 }
+        });
       });
 
-      // Tornar o objeto arrastável
-      tornarArrastavel(el);
-
-      plano.appendChild(el);
-      selecionarObjeto(el);
-    }
-
-    // Função para selecionar um objeto
-    function selecionarObjeto(el) {
-      if (objetoSelecionado) {
-        objetoSelecionado.classList.remove('selecionado');
-      }
-      objetoSelecionado = el;
-      objetoSelecionado.classList.add('selecionado');
-    }
-
-    // Desselecionar ao clicar no fundo do plano
-    plano.addEventListener('click', () => {
-      if (objetoSelecionado) {
-        objetoSelecionado.classList.remove('selecionado');
-        objetoSelecionado = null;
-      }
-    });
-
-    // Função para remover o objeto selecionado
-    function removerSelecionado() {
-      if (objetoSelecionado) {
-        plano.removeChild(objetoSelecionado);
-        objetoSelecionado = null;
-      } else {
-        alert('Selecione um objeto no plano para remover!');
-      }
-    }
-
-    // Limpar todo o plano
-    function limparPlano() {
-      plano.innerHTML = '';
-      objetoSelecionado = null;
-    }
-
-    // Lógica para arrastar os elementos
-    function tornarArrastavel(el) {
-      let posX = 0, posY = 0, mouseX = 0, mouseY = 0;
-
-      el.onmousedown = function(e) {
-        e.preventDefault();
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-
-        document.onmousemove = function(e) {
-          e.preventDefault();
-          posX = mouseX - e.clientX;
-          posY = mouseY - e.clientY;
-          mouseX = e.clientX;
-          mouseY = e.clientY;
-
-          el.style.top = (el.offsetTop - posY) + "px";
-          el.style.left = (el.offsetLeft - posX) + "px";
-        };
-
-        document.onmouseup = function() {
-          document.onmousemove = null;
-          document.onmouseup = null;
-        };
+      const layout = {
+        title: 'Plano Argand-Gauss (Real vs Imaginário)',
+        xaxis: { title: 'Eixo Real (Re)', zeroline: true, zerolinecolor: '#000', zerolinewidth: 2 },
+        yaxis: { title: 'Eixo Imaginário (Im)', zeroline: true, zerolinecolor: '#000', zerolinewidth: 2, scaleanchor: 'x' },
+        showlegend: true,
+        hovermode: 'closest'
       };
+
+      Plotly.newPlot('plot-complexo', traces, layout, {responsive: true});
     }
+
+    function adicionarComplexo() {
+      const re = parseFloat(document.getElementById('c-re').value) || 0;
+      const im = parseFloat(document.getElementById('c-im').value) || 0;
+      complexos.push({ id: Date.now(), re, im });
+      renderComplexos();
+    }
+
+    function removerComplexo(id) {
+      complexos = complexos.filter(c => c.id !== id);
+      renderComplexos();
+    }
+
+
+    // --- LÓGICA DO ESPAÇO R³ ---
+    let pontos3d = [
+      { id: 1, x: 2, y: 3, z: 4 },
+      { id: 2, x: -3, y: 2, z: 3 }
+    ];
+
+    function render3D() {
+      const listEl = document.getElementById('lista-3d');
+      listEl.innerHTML = '';
+
+      const traces = [];
+
+      pontos3d.forEach((p, index) => {
+        const label = `v${index+1} (${p.x}, ${p.y}, ${p.z})`;
+
+        // Item na lista lateral
+        const item = document.createElement('div');
+        item.className = 'list-item';
+        item.innerHTML = `
+          <span><b>${label}</b></span>
+          <button class="btn btn-remove" onclick="remover3D(${p.id})">Remover</button>
+        `;
+        listEl.appendChild(item);
+
+        // Traço do vetor da origem (0,0,0) até (x, y, z)
+        traces.push({
+          x: [0, p.x],
+          y: [0, p.y],
+          z: [0, p.z],
+          mode: 'lines+markers',
+          type: 'scatter3d',
+          name: label,
+          marker: { size: [0, 6] },
+          line: { width: 5 }
+        });
+      });
+
+      const layout = {
+        title: 'Espaço Tridimensional (Clique e arraste para girar)',
+        scene: {
+          xaxis: { title: 'Eixo X' },
+          yaxis: { title: 'Eixo Y' },
+          zaxis: { title: 'Eixo Z' }
+        },
+        showlegend: true
+      };
+
+      Plotly.newPlot('plot-3d', traces, layout, {responsive: true});
+    }
+
+    function adicionar3D() {
+      const x = parseFloat(document.getElementById('r3-x').value) || 0;
+      const y = parseFloat(document.getElementById('r3-y').value) || 0;
+      const z = parseFloat(document.getElementById('r3-z').value) || 0;
+      pontos3d.push({ id: Date.now(), x, y, z });
+      render3D();
+    }
+
+    function remover3D(id) {
+      pontos3d = pontos3d.filter(p => p.id !== id);
+      render3D();
+    }
+
+    // Inicializar os gráficos ao carregar a página
+    window.onload = () => {
+      renderComplexos();
+      render3D();
+    };
   </script>
 </body>
 </html>
