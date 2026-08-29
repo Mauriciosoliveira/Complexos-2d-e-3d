@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizador Geométrico de Corpos: 2D & 3D</title>
+  <style>
+    :root {
+      --bg: #0f0f17;
+      --card-bg: rgba(23, 23, 35, 0.92);
+      --accent: #7aa2f7;
+      --accent-hover: #bb9af7;
+      --text: #c0caf5;
+      --border: #33334d;
+      --success: #9ece6a;
+      --pink: #f7768e;
+      --yellow: #e0af68;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #161622;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: var(--accent);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      background: #09090e;
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: #a9b1d6;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #0f0f17;
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: #fff;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .content-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tab-content {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    #view2d {
+      padding: 20px;
+      gap: 20px;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      overflow-y: auto;
+    }
+
+    canvas#canvas2d {
+      background: #11111b;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .controls {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      width: 360px;
+      backdrop-filter: blur(8px);
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+    }
+
+    .control-group { margin-bottom: 14px; }
+    label { display: block; margin-bottom: 6px; font-size: 0.85em; color: #a9b1d6; }
+    input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .btn-action {
+      background: #1f1f2e;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.82em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      border-color: var(--accent);
+      color: #fff;
+      background: rgba(122, 162, 247, 0.15);
+    }
+
+    .info-card {
+      background: #16161e;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.85em;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .matrix-display {
+      font-family: monospace;
+      background: #16161e;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.9em;
+      color: var(--success);
+      border: 1px solid var(--border);
+      white-space: pre;
+    }
+
+    #view3d { position: relative; }
+    #canvas3d-container { width: 100%; height: 100%; }
+
+    #ui3d {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+    }
+
+    #info3d {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: var(--card-bg);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      border: 1px solid var(--border);
+    }
+
+    .mode-selector {
+      display: flex;
+      background: #10101a;
+      border-radius: 6px;
+      padding: 2px;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .mode-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #a9b1d6;
+      padding: 6px;
+      font-size: 0.8em;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      color: #0f0f17;
+      font-weight: bold;
+    }
+  </style>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+  <header>
+    <h1>A Abordagem Matricial dos Corpos Numéricos</h1>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('2d')">Modo 2D (Ensino Médio)</button>
+      <button class="tab-btn" onclick="switchTab('3d')">Modo 3D (Extensão)</button>
+    </div>
+  </header>
+
+  <div class="content-area">
+    
+    <!-- MODO 2D -->
+    <div id="view2d" class="tab-content active">
+      <canvas id="canvas2d" width="500" height="500"></canvas>
+      
+      <div class="controls">
+        <h3>Parâmetros no Plano (R²)</h3>
+        
+        <div class="control-group">
+          <label for="sliderA">Parte Real (a): <b id="valA">1.0</b></label>
+          <input type="range" id="sliderA" min="-3" max="3" step="0.1" value="1">
+        </div>
+        
+        <div class="control-group">
+          <label for="sliderB">Parte Imaginária (b): <b id="valB">1.0</b></label>
+          <input type="range" id="sliderB" min="-3" max="3" step="0.1" value="1">
+        </div>
+
+        <label>Operações Rápidas:</label>
+        <div class="button-grid">
+          <button class="btn-action" onclick="applyOperation('multI')">&times; i (Girar 90&deg;)</button>
+          <button class="btn-action" onclick="applyOperation('conjugate')">Conjugar (z̄)</button>
+          <button class="btn-action" onclick="applyOperation('normalize')">Normalizar (r=1)</button>
+          <button class="btn-action" onclick="applyOperation('reset')">Resetar</button>
+        </div>
+
+        <div class="info-card">
+          <b>Formas Numéricas:</b><br>
+          • Retangular: <span id="textRect" style="color:var(--pink)">1.00 + 1.00i</span><br>
+          • Euler: <span id="textEuler" style="color:var(--yellow)">1.41 · e^(i · 45.0°)</span>
+        </div>
+
+        <div class="control-group">
+          <label>Matriz de Transformação M:</label>
+          <div class="matrix-display" id="matrix2dText">[ 1.0 , -1.0 ]&#10;[ 1.0 ,  1.0 ]</div>
+        </div>
+
+        <div class="info-card">
+          Módulo (r): <b id="infoModulus">1.41</b><br>
+          Ângulo (&theta;): <b id="infoAngle">45.0&deg;</b>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODO 3D -->
+    <div id="view3d" class="tab-content">
+      <div id="canvas3d-container"></div>
+      
+      <div class="controls" id="ui3d">
+        <h3>Transformação no Espaço (R³)</h3>
+        
+        <div class="mode-selector">
+          <button class="mode-btn active" id="btnModeEuler" onclick="setMode3D('euler')">Ângulos de Euler</button>
+          <button class="mode-btn" id="btnModeQuat" onclick="setMode3D('quat')">Quatérnios (H)</button>
+        </div>
+
+        <!-- Painel Euler -->
+        <div id="panelEuler">
+          <div class="control-group">
+            <label for="rotX">Rotação Eixo X (&theta;x): <b id="valX">0</b>&deg;</label>
+            <input type="range" id="rotX" min="0" max="360" value="0">
+          </div>
+          
+          <div class="control-group">
+            <label for="rotY">Rotação Eixo Y (&theta;y): <b id="valY">45</b>&deg;</label>
+            <input type="range" id="rotY" min="0" max="360" value="45">
+          </div>
+          
+          <div class="control-group">
+            <label for="rotZ">Rotação Eixo Z (&theta;z): <b id="valZ">0</b>&deg;</label>
+            <input type="range" id="rotZ" min="0" max="360" value="0">
+          </div>
+        </div>
+
+        <!-- Painel Quatérnio -->
+        <div id="panelQuat" style="display: none;">
+          <div class="control-group">
+            <label for="quatA">Parte Escalar (a): <b id="valQuatA">1.0</b></label>
+            <input type="range" id="quatA" min="-1" max="1" step="0.05" value="1">
+          </div>
+          <div class="control-group">
+            <label for="quatB">Eixo i (b): <b id="valQuatB">0.0</b></label>
+            <input type="range" id="quatB" min="-1" max="1" step="0.05" value="0">
+          </div>
+          <div class="control-group">
+            <label for="quatC">Eixo j (c): <b id="valQuatC">0.5</b></label>
+            <input type="range" id="quatC" min="-1" max="1" step="0.05" value="0.5">
+          </div>
+          <div class="control-group">
+            <label for="quatD">Eixo k (d): <b id="valQuatD">0.0</b></label>
+            <input type="range" id="quatD" min="-1" max="1" step="0.05" value="0">
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="scale">Escala (Fator r): <b id="valScale">1.0</b></label>
+          <input type="range" id="scale" min="0.2" max="2.5" step="0.1" value="1.0">
+        </div>
+
+        <label>Submatriz 3x3 de Rotação:</label>
+        <div class="matrix-display" id="matrix3dDisplay"></div>
+      </div>
+
+      <div id="info3d">
+        Arraste com o mouse para girar a câmera 3D. Scroll para Zoom.
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  // --- NAVEGAÇÃO ENTRE ABAS ---
+  function switchTab(mode) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    if (mode === '2d') {
+      document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      document.getElementById('view2d').classList.add('active');
+    } else {
+      document.querySelectorAll('.tab-btn')[1].classList.add('active');
+      document.getElementById('view3d').classList.add('active');
+      onWindowResize3D();
+    }
+  }
+
+  // --- LÓGICA 2D ---
+  const canvas2d = document.getElementById('canvas2d');
+  const ctx2d = canvas2d.getContext('2d');
+  const sliderA = document.getElementById('sliderA');
+  const sliderB = document.getElementById('sliderB');
+  const valA = document.getElementById('valA');
+  const valB = document.getElementById('valB');
+  const textRect = document.getElementById('textRect');
+  const textEuler = document.getElementById('textEuler');
+  const matrix2dText = document.getElementById('matrix2dText');
+  const infoModulus = document.getElementById('infoModulus');
+  const infoAngle = document.getElementById('infoAngle');
+
+  const origin2d = { x: canvas2d.width / 2, y: canvas2d.height / 2 };
+  const scale2d = 45;
+
+  function toCanvasX(x) { return origin2d.x + x * scale2d; }
+  function toCanvasY(y) { return origin2d.y - y * scale2d; }
+
+  function applyOperation(type) {
+    let a = parseFloat(sliderA.value);
+    let b = parseFloat(sliderB.value);
+
+    if (type === 'multI') {
+      let temp = a;
+      a = -b;
+      b = temp;
+    } else if (type === 'conjugate') {
+      b = -b;
+    } else if (type === 'normalize') {
+      let mod = Math.sqrt(a * a + b * b);
+      if (mod > 0) { a /= mod; b /= mod; }
+    } else if (type === 'reset') {
+      a = 1.0; b = 1.0;
+    }
+
+    sliderA.value = a.toFixed(1);
+    sliderB.value = b.toFixed(1);
+    draw2D();
+  }
+
+  function draw2D() {
+    const a = parseFloat(sliderA.value);
+    const b = parseFloat(sliderB.value);
+
+    valA.textContent = a.toFixed(1);
+    valB.textContent = b.toFixed(1);
+
+    ctx2d.clearRect(0, 0, canvas2d.width, canvas2d.height);
+
+    // Eixos Ortogonais Originais
+    ctx2d.strokeStyle = '#33334d';
+    ctx2d.lineWidth = 1;
+    ctx2d.beginPath();
+    ctx2d.moveTo(0, origin2d.y); ctx2d.lineTo(canvas2d.width, origin2d.y);
+    ctx2d.moveTo(origin2d.x, 0); ctx2d.lineTo(origin2d.x, canvas2d.height);
+    ctx2d.stroke();
+
+    // Deformação da Grade Matricial
+    ctx2d.strokeStyle = 'rgba(122, 162, 247, 0.25)';
+    ctx2d.lineWidth = 1;
+
+    for (let gx = -6; gx <= 6; gx++) {
+      ctx2d.beginPath();
+      for (let gy = -6; gy <= 6; gy += 0.2) {
+        let tx = a * gx - b * gy;
+        let ty = b * gx + a * gy;
+        if (gy === -6) ctx2d.moveTo(toCanvasX(tx), toCanvasY(ty));
+        else ctx2d.lineTo(toCanvasX(tx), toCanvasY(ty));
+      }
+      ctx2d.stroke();
+    }
+
+    for (let gy = -6; gy <= 6; gy++) {
+      ctx2d.beginPath();
+      for (let gx = -6; gx <= 6; gx += 0.2) {
+        let tx = a * gx - b * gy;
+        let ty = b * gx + a * gy;
+        if (gx === -6) ctx2d.moveTo(toCanvasX(tx), toCanvasY(ty));
+        else ctx2d.lineTo(toCanvasX(tx), toCanvasY(ty));
+      }
+      ctx2d.stroke();
+    }
+
+    // Geometria: Módulo e Ângulo
+    const r = Math.sqrt(a * a + b * b);
+    let rad = Math.atan2(b, a);
+    if (rad < 0) rad += 2 * Math.PI;
+    let deg = rad * (180 / Math.PI);
+
+    // Desenhar Arco de Ângulo
+    if (r > 0.05) {
+      ctx2d.strokeStyle = '#e0af68';
+      ctx2d.lineWidth = 2;
+      ctx2d.beginPath();
+      ctx2d.arc(origin2d.x, origin2d.y, 30, 0, -rad, true);
+      ctx2d.stroke();
+    }
+
+    // Vetor do Número Complexo
+    ctx2d.strokeStyle = '#f7768e';
+    ctx2d.lineWidth = 3;
+    ctx2d.beginPath();
+    ctx2d.moveTo(origin2d.x, origin2d.y);
+    ctx2d.lineTo(toCanvasX(a), toCanvasY(b));
+    ctx2d.stroke();
+
+    // Ponto na ponta do vetor
+    ctx2d.fillStyle = '#f7768e';
+    ctx2d.beginPath();
+    ctx2d.arc(toCanvasX(a), toCanvasY(b), 6, 0, 2 * Math.PI);
+    ctx2d.fill();
+
+    // Atualização dos Card de Informações
+    const bSign = b >= 0 ? '+' : '-';
+    textRect.textContent = `${a.toFixed(2)} ${bSign} ${Math.abs(b).toFixed(2)}i`;
+    textEuler.textContent = `${r.toFixed(2)} · e^(i · ${deg.toFixed(1)}°)`;
+    matrix2dText.textContent = `[ ${a.toFixed(1)} , ${(-b).toFixed(1)} ]\n[ ${b.toFixed(1)} , ${a.toFixed(1)} ]`;
+    infoModulus.textContent = r.toFixed(2);
+    infoAngle.textContent = deg.toFixed(1) + '°';
+  }
+
+  sliderA.addEventListener('input', draw2D);
+  sliderB.addEventListener('input', draw2D);
+  draw2D();
+
+  // --- LÓGICA 3D (THREE.JS & QUATÉRNIOS) ---
+  const container3d = document.getElementById('canvas3d-container');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0f0f17);
+
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+  camera.position.set(4, 4, 6);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  container3d.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(5, 10, 7);
+  scene.add(dirLight);
+
+  scene.add(new THREE.GridHelper(10, 10, 0x444466, 0x222233));
+  scene.add(new THREE.AxesHelper(3));
+
+  const geometry = new THREE.BoxGeometry(1.8, 1.8, 1.8);
+  const material = new THREE.MeshPhongMaterial({ color: 0x7aa2f7, transparent: true, opacity: 0.7, shininess: 100 });
+  const cube = new THREE.Mesh(geometry, material);
+  
+  const wireframe = new THREE.LineSegments(
+    new THREE.WireframeGeometry(geometry),
+    new THREE.LineBasicMaterial({ color: 0xbb9af7, linewidth: 2 })
+  );
+  cube.add(wireframe);
+  scene.add(cube);
+
+  let mode3D = 'euler';
+
+  function setMode3D(mode) {
+    mode3D = mode;
+    document.getElementById('btnModeEuler').classList.toggle('active', mode === 'euler');
+    document.getElementById('btnModeQuat').classList.toggle('active', mode === 'quat');
+    document.getElementById('panelEuler').style.display = mode === 'euler' ? 'block' : 'none';
+    document.getElementById('panelQuat').style.display = mode === 'quat' ? 'block' : 'none';
+    update3D();
+  }
+
+  const rotX = document.getElementById('rotX');
+  const rotY = document.getElementById('rotY');
+  const rotZ = document.getElementById('rotZ');
+  const quatA = document.getElementById('quatA');
+  const quatB = document.getElementById('quatB');
+  const quatC = document.getElementById('quatC');
+  const quatD = document.getElementById('quatD');
+  const scale = document.getElementById('scale');
+
+  function update3D() {
+    const s = parseFloat(scale.value);
+    document.getElementById('valScale').textContent = s.toFixed(1);
+    cube.scale.set(s, s, s);
+
+    if (mode3D === 'euler') {
+      const rx = (parseFloat(rotX.value) * Math.PI) / 180;
+      const ry = (parseFloat(rotY.value) * Math.PI) / 180;
+      const rz = (parseFloat(rotZ.value) * Math.PI) / 180;
+
+      document.getElementById('valX').textContent = rotX.value;
+      document.getElementById('valY').textContent = rotY.value;
+      document.getElementById('valZ').textContent = rotZ.value;
+
+      cube.rotation.set(rx, ry, rz);
+    } else {
+      let qa = parseFloat(quatA.value);
+      let qb = parseFloat(quatB.value);
+      let qc = parseFloat(quatC.value);
+      let qd = parseFloat(quatD.value);
+
+      document.getElementById('valQuatA').textContent = qa.toFixed(2);
+      document.getElementById('valQuatB').textContent = qb.toFixed(2);
+      document.getElementById('valQuatC').textContent = qc.toFixed(2);
+      document.getElementById('valQuatD').textContent = qd.toFixed(2);
+
+      // Normalizar Quatérnio
+      let norm = Math.sqrt(qa*qa + qb*qb + qc*qc + qd*qd);
+      if (norm === 0) { qa = 1; norm = 1; }
+      qa /= norm; qb /= norm; qc /= norm; qd /= norm;
+
+      const q = new THREE.Quaternion(qb, qc, qd, qa);
+      cube.setRotationFromQuaternion(q);
+    }
+
+    cube.updateMatrix();
+    const m = cube.matrix.elements;
+    
+    document.getElementById('matrix3dDisplay').textContent = 
+      `[ ${m[0].toFixed(2)}  ${m[4].toFixed(2)}  ${m[8].toFixed(2)} ]\n` +
+      `[ ${m[1].toFixed(2)}  ${m[5].toFixed(2)}  ${m[9].toFixed(2)} ]\n` +
+      `[ ${m[2].toFixed(2)}  ${m[6].toFixed(2)}  ${m[10].toFixed(2)} ]`;
+  }
+
+  function onWindowResize3D() {
+    const width = container3d.clientWidth || window.innerWidth;
+    const height = container3d.clientHeight || (window.innerHeight - 70);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  }
+
+  [rotX, rotY, rotZ, quatA, quatB, quatC, quatD, scale].forEach(elem => elem.addEventListener('input', update3D));
+  window.addEventListener('resize', onWindowResize3D);
+
+  update3D();
+
+  function animate3D() {
+    requestAnimationFrame(animate3D);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate3D();
+</script>
+</body>
+</html>
