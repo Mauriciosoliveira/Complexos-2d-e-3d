@@ -1,1 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizador Geométrico de Corpos: 2D & 3D</title>
+  <style>
+    :root {
+      --bg: #0f0f17;
+      --card-bg: rgba(23, 23, 35, 0.9);
+      --accent: #7aa2f7;
+      --accent-hover: #bb9af7;
+      --text: #c0caf5;
+      --border: #33334d;
+    }
 
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #161622;
+      border-bottom: 1px solid var(--border);
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: var(--accent);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      background: #09090e;
+      padding: 5px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: #a9b1d6;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #0f0f17;
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: #fff;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .content-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tab-content {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    #view2d {
+      padding: 20px;
+      gap: 20px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      overflow-y: auto;
+    }
+
+    canvas#canvas2d {
+      background: #11111b;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .controls {
+      background: var(--card-bg);
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      width: 320px;
+      backdrop-filter: blur(8px);
+    }
+
+    .control-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-size: 0.9em; color: #a9b1d6; }
+    input[type=range] { width: 100%; accent-color: var(--accent); }
+
+    .matrix-display {
+      font-family: monospace;
+      background: #16161e;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1em;
+      color: #9ece6a;
+      border: 1px solid var(--border);
+      white-space: pre;
+    }
+
+    #view3d { position: relative; }
+    #canvas3d-container { width: 100%; height: 100%; }
+
+    #ui3d {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+    }
+
+    #info3d {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: var(--card-bg);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      border: 1px solid var(--border);
+    }
+  </style>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+  <header>
+    <h1>A Abordagem Matricial dos Corpos Numéricos</h1>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('2d')">Modo 2D (Ensino Médio)</button>
+      <button class="tab-btn" onclick="switchTab('3d')">Modo 3D (Extensão)</button>
+    </div>
+  </header>
+
+  <div class="content-area">
+    
+    <div id="view2d" class="tab-content active">
+      <canvas id="canvas2d" width="480" height="480"></canvas>
+      
+      <div class="controls">
+        <h3>Parâmetros no Plano (R²)</h3>
+        
+        <div class="control-group">
+          <label for="sliderA">Parte Real (a): <b id="valA">1.0</b></label>
+          <input type="range" id="sliderA" min="-3" max="3" step="0.1" value="1">
+        </div>
+        
+        <div class="control-group">
+          <label for="sliderB">Parte Imaginária (b): <b id="valB">1.0</b></label>
+          <input type="range" id="sliderB" min="-3" max="3" step="0.1" value="1">
+        </div>
+
+        <div class="control-group">
+          <label>Matriz de Transformação M:</label>
+          <div class="matrix-display" id="matrix2dText">[ 1.0 , -1.0 ]&#10;[ 1.0 ,  1.0 ]</div>
+        </div>
+
+        <div class="control-group">
+          <label>Interpretação Geométrica:</label>
+          <div id="geoInfo2d">
+            Módulo (r): <b>1.41</b><br>
+            Ângulo (&theta;): <b>45.0&deg;</b>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view3d" class="tab-content">
+      <div id="canvas3d-container"></div>
+      
+      <div class="controls" id="ui3d">
+        <h3>Transformação no Espaço (R³)</h3>
+        
+        <div class="control-group">
+          <label for="rotX">Rotação Eixo X (&theta;x): <b id="valX">0</b>&deg;</label>
+          <input type="range" id="rotX" min="0" max="360" value="0">
+        </div>
+        
+        <div class="control-group">
+          <label for="rotY">Rotação Eixo Y (&theta;y): <b id="valY">45</b>&deg;</label>
+          <input type="range" id="rotY" min="0" max="360" value="45">
+        </div>
+        
+        <div class="control-group">
+          <label for="rotZ">Rotação Eixo Z (&theta;z): <b id="valZ">0</b>&deg;</label>
+          <input type="range" id="rotZ" min="0" max="360" value="0">
+        </div>
+
+        <div class="control-group">
+          <label for="scale">Escala (Fator r): <b id="valScale">1.0</b></label>
+          <input type="range" id="scale" min="0.2" max="2.5" step="0.1" value="1.0">
+        </div>
+
+        <label>Submatriz 3x3 de Rotação:</label>
+        <div class="matrix-display" id="matrix3dDisplay"></div>
+      </div>
+
+      <div id="info3d">
+        Arraste com o mouse para girar a câmera 3D. Scroll para Zoom.
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  function switchTab(mode) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    if (mode === '2d') {
+      document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      document.getElementById('view2d').classList.add('active');
+    } else {
+      document.querySelectorAll('.tab-btn')[1].classList.add('active');
+      document.getElementById('view3d').classList.add('active');
+      onWindowResize3D();
+    }
+  }
+
+  const canvas2d = document.getElementById('canvas2d');
+  const ctx2d = canvas2d.getContext('2d');
+  const sliderA = document.getElementById('sliderA');
+  const sliderB = document.getElementById('sliderB');
+  const valA = document.getElementById('valA');
+  const valB = document.getElementById('valB');
+  const matrix2dText = document.getElementById('matrix2dText');
+  const geoInfo2d = document.getElementById('geoInfo2d');
+
+  const origin2d = { x: canvas2d.width / 2, y: canvas2d.height / 2 };
+  const scale2d = 45;
+
+  function toCanvasX(x) { return origin2d.x + x * scale2d; }
+  function toCanvasY(y) { return origin2d.y - y * scale2d; }
+
+  function draw2D() {
+    const a = parseFloat(sliderA.value);
+    const b = parseFloat(sliderB.value);
+
+    valA.textContent = a.toFixed(1);
+    valB.textContent = b.toFixed(1);
+
+    ctx2d.clearRect(0, 0, canvas2d.width, canvas2d.height);
+
+    ctx2d.strokeStyle = '#33334d';
+    ctx2d.lineWidth = 1;
+    ctx2d.beginPath();
+    ctx2d.moveTo(0, origin2d.y); ctx2d.lineTo(canvas2d.width, origin2d.y);
+    ctx2d.moveTo(origin2d.x, 0); ctx2d.lineTo(origin2d.x, canvas2d.height);
+    ctx2d.stroke();
+
+    ctx2d.strokeStyle = 'rgba(122, 162, 247, 0.3)';
+    ctx2d.lineWidth = 1.5;
+
+    for (let gx = -5; gx <= 5; gx++) {
+      ctx2d.beginPath();
+      for (let gy = -5; gy <= 5; gy += 0.2) {
+        let tx = a * gx - b * gy;
+        let ty = b * gx + a * gy;
+        if (gy === -5) ctx2d.moveTo(toCanvasX(tx), toCanvasY(ty));
+        else ctx2d.lineTo(toCanvasX(tx), toCanvasY(ty));
+      }
+      ctx2d.stroke();
+    }
+
+    for (let gy = -5; gy <= 5; gy++) {
+      ctx2d.beginPath();
+      for (let gx = -5; gx <= 5; gx += 0.2) {
+        let tx = a * gx - b * gy;
+        let ty = b * gx + a * gy;
+        if (gx === -5) ctx2d.moveTo(toCanvasX(tx), toCanvasY(ty));
+        else ctx2d.lineTo(toCanvasX(tx), toCanvasY(ty));
+      }
+      ctx2d.stroke();
+    }
+
+    ctx2d.strokeStyle = '#f7768e';
+    ctx2d.lineWidth = 3;
+    ctx2d.beginPath();
+    ctx2d.moveTo(origin2d.x, origin2d.y);
+    ctx2d.lineTo(toCanvasX(a), toCanvasY(b));
+    ctx2d.stroke();
+
+    ctx2d.fillStyle = '#f7768e';
+    ctx2d.beginPath();
+    ctx2d.arc(toCanvasX(a), toCanvasY(b), 6, 0, 2 * Math.PI);
+    ctx2d.fill();
+
+    const r = Math.sqrt(a * a + b * b);
+    let theta = Math.atan2(b, a) * (180 / Math.PI);
+    if (theta < 0) theta += 360;
+
+    matrix2dText.textContent = `[ ${a.toFixed(1)} , ${(-b).toFixed(1)} ]\n[ ${b.toFixed(1)} , ${a.toFixed(1)} ]`;
+    geoInfo2d.innerHTML = `Módulo (r): <b>${r.toFixed(2)}</b><br>Rotação (&theta;): <b>${theta.toFixed(1)}&deg;</b>`;
+  }
+
+  sliderA.addEventListener('input', draw2D);
+  sliderB.addEventListener('input', draw2D);
+  draw2D();
+
+  const container3d = document.getElementById('canvas3d-container');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0f0f17);
+
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+  camera.position.set(4, 4, 6);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  container3d.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(5, 10, 7);
+  scene.add(dirLight);
+
+  scene.add(new THREE.GridHelper(10, 10, 0x444466, 0x222233));
+  scene.add(new THREE.AxesHelper(3));
+
+  const geometry = new THREE.BoxGeometry(1.8, 1.8, 1.8);
+  const material = new THREE.MeshPhongMaterial({ color: 0x7aa2f7, transparent: true, opacity: 0.7, shininess: 100 });
+  const cube = new THREE.Mesh(geometry, material);
+  
+  const wireframe = new THREE.LineSegments(
+    new THREE.WireframeGeometry(geometry),
+    new THREE.LineBasicMaterial({ color: 0xbb9af7, linewidth: 2 })
+  );
+  cube.add(wireframe);
+  scene.add(cube);
+
+  const rotX = document.getElementById('rotX');
+  const rotY = document.getElementById('rotY');
+  const rotZ = document.getElementById('rotZ');
+  const scale = document.getElementById('scale');
+
+  function update3D() {
+    const rx = (parseFloat(rotX.value) * Math.PI) / 180;
+    const ry = (parseFloat(rotY.value) * Math.PI) / 180;
+    const rz = (parseFloat(rotZ.value) * Math.PI) / 180;
+    const s = parseFloat(scale.value);
+
+    document.getElementById('valX').textContent = rotX.value;
+    document.getElementById('valY').textContent = rotY.value;
+    document.getElementById('valZ').textContent = rotZ.value;
+    document.getElementById('valScale').textContent = s.toFixed(1);
+
+    cube.rotation.set(rx, ry, rz);
+    cube.scale.set(s, s, s);
+
+    cube.updateMatrix();
+    const m = cube.matrix.elements;
+    
+    document.getElementById('matrix3dDisplay').textContent = 
+      `[ ${m[0].toFixed(2)}  ${m[4].toFixed(2)}  ${m[8].toFixed(2)} ]\n` +
+      `[ ${m[1].toFixed(2)}  ${m[5].toFixed(2)}  ${m[9].toFixed(2)} ]\n` +
+      `[ ${m[2].toFixed(2)}  ${m[6].toFixed(2)}  ${m[10].toFixed(2)} ]`;
+  }
+
+  function onWindowResize3D() {
+    const width = container3d.clientWidth || window.innerWidth;
+    const height = container3d.clientHeight || (window.innerHeight - 70);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  }
+
+  [rotX, rotY, rotZ, scale].forEach(elem => elem.addEventListener('input', update3D));
+  window.addEventListener('resize', onWindowResize3D);
+
+  update3D();
+
+  function animate3D() {
+    requestAnimationFrame(animate3D);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate3D();
+</script>
+</body>
+</html>
