@@ -14,6 +14,7 @@
       --border: #33334d;
       --success: #9ece6a;
       --pink: #f7768e;
+      --cyan: #7dcfff;
       --yellow: #e0af68;
     }
 
@@ -116,39 +117,56 @@
       padding: 20px;
       border-radius: 12px;
       border: 1px solid var(--border);
-      width: 360px;
+      width: 380px;
       backdrop-filter: blur(8px);
-      max-height: calc(100vh - 100px);
+      max-height: calc(100vh - 90px);
       overflow-y: auto;
     }
 
-    .control-group { margin-bottom: 14px; }
-    label { display: block; margin-bottom: 6px; font-size: 0.85em; color: #a9b1d6; }
+    .control-group { margin-bottom: 12px; }
+    label { display: block; margin-bottom: 4px; font-size: 0.85em; color: #a9b1d6; }
     input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+    .section-title {
+      font-size: 0.9em;
+      font-weight: bold;
+      color: var(--accent);
+      margin: 12px 0 6px 0;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+    }
 
     .button-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      margin-bottom: 16px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .button-grid-unary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
     }
 
     .btn-action {
       background: #1f1f2e;
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 8px;
+      padding: 8px 4px;
       border-radius: 6px;
-      font-size: 0.82em;
+      font-size: 0.8em;
       font-weight: 600;
       cursor: pointer;
+      text-align: center;
       transition: all 0.2s;
     }
 
     .btn-action:hover {
       border-color: var(--accent);
       color: #fff;
-      background: rgba(122, 162, 247, 0.15);
+      background: rgba(122, 162, 247, 0.2);
     }
 
     .info-card {
@@ -156,18 +174,18 @@
       padding: 10px 12px;
       border-radius: 8px;
       border: 1px solid var(--border);
-      font-size: 0.85em;
-      margin-bottom: 12px;
+      font-size: 0.83em;
+      margin-bottom: 10px;
       line-height: 1.5;
     }
 
     .matrix-display {
       font-family: monospace;
       background: #16161e;
-      padding: 10px;
+      padding: 8px;
       border-radius: 8px;
       text-align: center;
-      font-size: 0.9em;
+      font-size: 0.85em;
       color: var(--success);
       border: 1px solid var(--border);
       white-space: pre;
@@ -229,8 +247,8 @@
   <header>
     <h1>A Abordagem Matricial dos Corpos Numéricos</h1>
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('2d')">Modo 2D (Ensino Médio)</button>
-      <button class="tab-btn" onclick="switchTab('3d')">Modo 3D (Extensão)</button>
+      <button class="tab-btn active" onclick="switchTab('2d')">Modo 2D (Operações Complexas)</button>
+      <button class="tab-btn" onclick="switchTab('3d')">Modo 3D (Extensão Espacial)</button>
     </div>
   </header>
 
@@ -241,40 +259,58 @@
       <canvas id="canvas2d" width="500" height="500"></canvas>
       
       <div class="controls">
-        <h3>Parâmetros no Plano (R²)</h3>
-        
+        <div class="section-title">Número Complexo z₁ (Rosa)</div>
         <div class="control-group">
-          <label for="sliderA">Parte Real (a): <b id="valA">1.0</b></label>
-          <input type="range" id="sliderA" min="-3" max="3" step="0.1" value="1">
+          <label for="sliderA">Parte Real (a₁): <b id="valA">2.0</b></label>
+          <input type="range" id="sliderA" min="-10" max="10" step="0.1" value="2.0">
         </div>
-        
         <div class="control-group">
-          <label for="sliderB">Parte Imaginária (b): <b id="valB">1.0</b></label>
-          <input type="range" id="sliderB" min="-3" max="3" step="0.1" value="1">
+          <label for="sliderB">Parte Imaginária (b₁): <b id="valB">2.0</b></label>
+          <input type="range" id="sliderB" min="-10" max="10" step="0.1" value="2.0">
         </div>
 
-        <label>Operações Rápidas:</label>
+        <div class="section-title">Número Complexo z₂ (Ciano)</div>
+        <div class="control-group">
+          <label for="sliderC">Parte Real (a₂): <b id="valC">1.0</b></label>
+          <input type="range" id="sliderC" min="-10" max="10" step="0.1" value="1.0">
+        </div>
+        <div class="control-group">
+          <label for="sliderD">Parte Imaginária (b₂): <b id="valD">-1.0</b></label>
+          <input type="range" id="sliderD" min="-10" max="10" step="0.1" value="-1.0">
+        </div>
+
+        <div class="section-title">Operações Aritméticas (z₁ e z₂)</div>
         <div class="button-grid">
-          <button class="btn-action" onclick="applyOperation('multI')">&times; i (Girar 90&deg;)</button>
-          <button class="btn-action" onclick="applyOperation('conjugate')">Conjugar (z̄)</button>
-          <button class="btn-action" onclick="applyOperation('normalize')">Normalizar (r=1)</button>
-          <button class="btn-action" onclick="applyOperation('reset')">Resetar</button>
+          <button class="btn-action" onclick="execOperation('add')">z₁ + z₂</button>
+          <button class="btn-action" onclick="execOperation('sub')">z₁ - z₂</button>
+          <button class="btn-action" onclick="execOperation('mult')">z₁ · z₂</button>
+          <button class="btn-action" onclick="execOperation('div')">z₁ / z₂</button>
+        </div>
+
+        <div class="section-title">Propriedades & Unárias (sobre z₁)</div>
+        <div class="button-grid-unary">
+          <button class="btn-action" onclick="execUnary('conj')">Conjugado z̄₁</button>
+          <button class="btn-action" onclick="execUnary('mod')">Apenas |z₁|</button>
+          <button class="btn-action" onclick="execUnary('arg')">Girar Arg(z₁)</button>
         </div>
 
         <div class="info-card">
           <b>Formas Numéricas:</b><br>
-          • Retangular: <span id="textRect" style="color:var(--pink)">1.00 + 1.00i</span><br>
-          • Euler: <span id="textEuler" style="color:var(--yellow)">1.41 · e^(i · 45.0°)</span>
-        </div>
-
-        <div class="control-group">
-          <label>Matriz de Transformação M:</label>
-          <div class="matrix-display" id="matrix2dText">[ 1.0 , -1.0 ]&#10;[ 1.0 ,  1.0 ]</div>
+          • z₁ = <span id="textZ1" style="color:var(--pink)">2.00 + 2.00i</span><br>
+          • z₂ = <span id="textZ2" style="color:var(--cyan)">1.00 - 1.00i</span><br>
+          • Resultado (z<sub>R</sub>) = <span id="textZR" style="color:var(--success)">3.00 + 1.00i</span>
         </div>
 
         <div class="info-card">
-          Módulo (r): <b id="infoModulus">1.41</b><br>
-          Ângulo (&theta;): <b id="infoAngle">45.0&deg;</b>
+          <b>Geometria de z₁:</b><br>
+          • Módulo |z₁|: <b id="infoMod1">2.83</b><br>
+          • Argumento Arg(z₁): <b id="infoArg1">45.0&deg;</b> (0.79 rad)<br>
+          • Conjugado z̄₁: <b id="infoConj1">2.00 - 2.00i</b>
+        </div>
+
+        <div class="control-group">
+          <label>Matriz de Transformação de z₁:</label>
+          <div class="matrix-display" id="matrix2dText">[ 2.0 , -2.0 ]&#10;[ 2.0 ,  2.0 ]</div>
         </div>
       </div>
     </div>
@@ -295,43 +331,41 @@
         <div id="panelEuler">
           <div class="control-group">
             <label for="rotX">Rotação Eixo X (&theta;x): <b id="valX">0</b>&deg;</label>
-            <input type="range" id="rotX" min="0" max="360" value="0">
+            <input type="range" id="rotX" min="-360" max="360" value="0">
           </div>
-          
           <div class="control-group">
             <label for="rotY">Rotação Eixo Y (&theta;y): <b id="valY">45</b>&deg;</label>
-            <input type="range" id="rotY" min="0" max="360" value="45">
+            <input type="range" id="rotY" min="-360" max="360" value="45">
           </div>
-          
           <div class="control-group">
             <label for="rotZ">Rotação Eixo Z (&theta;z): <b id="valZ">0</b>&deg;</label>
-            <input type="range" id="rotZ" min="0" max="360" value="0">
+            <input type="range" id="rotZ" min="-360" max="360" value="0">
           </div>
         </div>
 
         <!-- Painel Quatérnio -->
         <div id="panelQuat" style="display: none;">
           <div class="control-group">
-            <label for="quatA">Parte Escalar (a): <b id="valQuatA">1.0</b></label>
-            <input type="range" id="quatA" min="-1" max="1" step="0.05" value="1">
+            <label for="quatA">Parte Escalar (a): <b id="valQuatA">1.00</b></label>
+            <input type="range" id="quatA" min="-3" max="3" step="0.05" value="1.0">
           </div>
           <div class="control-group">
-            <label for="quatB">Eixo i (b): <b id="valQuatB">0.0</b></label>
-            <input type="range" id="quatB" min="-1" max="1" step="0.05" value="0">
+            <label for="quatB">Eixo i (b): <b id="valQuatB">0.00</b></label>
+            <input type="range" id="quatB" min="-3" max="3" step="0.05" value="0.0">
           </div>
           <div class="control-group">
-            <label for="quatC">Eixo j (c): <b id="valQuatC">0.5</b></label>
-            <input type="range" id="quatC" min="-1" max="1" step="0.05" value="0.5">
+            <label for="quatC">Eixo j (c): <b id="valQuatC">0.50</b></label>
+            <input type="range" id="quatC" min="-3" max="3" step="0.05" value="0.5">
           </div>
           <div class="control-group">
-            <label for="quatD">Eixo k (d): <b id="valQuatD">0.0</b></label>
-            <input type="range" id="quatD" min="-1" max="1" step="0.05" value="0">
+            <label for="quatD">Eixo k (d): <b id="valQuatD">0.00</b></label>
+            <input type="range" id="quatD" min="-3" max="3" step="0.05" value="0.0">
           </div>
         </div>
 
         <div class="control-group">
           <label for="scale">Escala (Fator r): <b id="valScale">1.0</b></label>
-          <input type="range" id="scale" min="0.2" max="2.5" step="0.1" value="1.0">
+          <input type="range" id="scale" min="0.1" max="5.0" step="0.1" value="1.0">
         </div>
 
         <label>Submatriz 3x3 de Rotação:</label>
@@ -364,54 +398,138 @@
   // --- LÓGICA 2D ---
   const canvas2d = document.getElementById('canvas2d');
   const ctx2d = canvas2d.getContext('2d');
+  
   const sliderA = document.getElementById('sliderA');
   const sliderB = document.getElementById('sliderB');
+  const sliderC = document.getElementById('sliderC');
+  const sliderD = document.getElementById('sliderD');
+
   const valA = document.getElementById('valA');
   const valB = document.getElementById('valB');
-  const textRect = document.getElementById('textRect');
-  const textEuler = document.getElementById('textEuler');
+  const valC = document.getElementById('valC');
+  const valD = document.getElementById('valD');
+
+  const textZ1 = document.getElementById('textZ1');
+  const textZ2 = document.getElementById('textZ2');
+  const textZR = document.getElementById('textZR');
+  
+  const infoMod1 = document.getElementById('infoMod1');
+  const infoArg1 = document.getElementById('infoArg1');
+  const infoConj1 = document.getElementById('infoConj1');
   const matrix2dText = document.getElementById('matrix2dText');
-  const infoModulus = document.getElementById('infoModulus');
-  const infoAngle = document.getElementById('infoAngle');
 
   const origin2d = { x: canvas2d.width / 2, y: canvas2d.height / 2 };
-  const scale2d = 45;
+  const scale2d = 22;
+
+  let activeOpResult = { a: 3.0, b: 1.0 }; // Resultado da operação para visualização
 
   function toCanvasX(x) { return origin2d.x + x * scale2d; }
   function toCanvasY(y) { return origin2d.y - y * scale2d; }
 
-  function applyOperation(type) {
+  function formatComplex(a, b) {
+    const sign = b >= 0 ? '+' : '-';
+    return `${a.toFixed(2)} ${sign} ${Math.abs(b).toFixed(2)}i`;
+  }
+
+  // Comandos de Operações Aritméticas
+  function execOperation(op) {
+    const a = parseFloat(sliderA.value);
+    const b = parseFloat(sliderB.value);
+    const c = parseFloat(sliderC.value);
+    const d = parseFloat(sliderD.value);
+
+    let resA = 0, resB = 0;
+
+    if (op === 'add') {
+      resA = a + c;
+      resB = b + d;
+    } else if (op === 'sub') {
+      resA = a - c;
+      resB = b - d;
+    } else if (op === 'mult') {
+      resA = a * c - b * d;
+      resB = a * d + b * c;
+    } else if (op === 'div') {
+      const denom = c * c + d * d;
+      if (denom === 0) {
+        alert("Divisão por zero não é definida no corpo C!");
+        return;
+      }
+      resA = (a * c + b * d) / denom;
+      resB = (b * c - a * d) / denom;
+    }
+
+    activeOpResult = { a: resA, b: resB };
+    draw2D();
+  }
+
+  // Comandos Unários & Propriedades
+  function execUnary(type) {
     let a = parseFloat(sliderA.value);
     let b = parseFloat(sliderB.value);
 
-    if (type === 'multI') {
+    if (type === 'conj') {
+      b = -b;
+      sliderB.value = b.toFixed(1);
+    } else if (type === 'mod') {
+      let mod = Math.sqrt(a * a + b * b);
+      a = mod;
+      b = 0;
+      sliderA.value = a.toFixed(1);
+      sliderB.value = b.toFixed(1);
+    } else if (type === 'arg') {
+      // Girar 90 graus (multiplicar por i)
       let temp = a;
       a = -b;
       b = temp;
-    } else if (type === 'conjugate') {
-      b = -b;
-    } else if (type === 'normalize') {
-      let mod = Math.sqrt(a * a + b * b);
-      if (mod > 0) { a /= mod; b /= mod; }
-    } else if (type === 'reset') {
-      a = 1.0; b = 1.0;
+      sliderA.value = a.toFixed(1);
+      sliderB.value = b.toFixed(1);
     }
 
-    sliderA.value = a.toFixed(1);
-    sliderB.value = b.toFixed(1);
-    draw2D();
+    execOperation('add'); // Atualiza a visão
+  }
+
+  function drawVector(x, y, color, label) {
+    const cx = toCanvasX(x);
+    const cy = toCanvasY(y);
+
+    ctx2d.strokeStyle = color;
+    ctx2d.fillStyle = color;
+    ctx2d.lineWidth = 2.5;
+
+    ctx2d.beginPath();
+    ctx2d.moveTo(origin2d.x, origin2d.y);
+    ctx2d.lineTo(cx, cy);
+    ctx2d.stroke();
+
+    // Cabeça da seta
+    const angle = Math.atan2(origin2d.y - cy, cx - origin2d.x);
+    const headLen = 8;
+    ctx2d.beginPath();
+    ctx2d.moveTo(cx, cy);
+    ctx2d.lineTo(cx - headLen * Math.cos(angle - Math.PI / 6), cy + headLen * Math.sin(angle - Math.PI / 6));
+    ctx2d.lineTo(cx - headLen * Math.cos(angle + Math.PI / 6), cy + headLen * Math.sin(angle + Math.PI / 6));
+    ctx2d.fill();
+
+    // Rótulo
+    ctx2d.font = 'bold 12px sans-serif';
+    ctx2d.fillText(label, cx + 8, cy - 8);
   }
 
   function draw2D() {
     const a = parseFloat(sliderA.value);
     const b = parseFloat(sliderB.value);
+    const c = parseFloat(sliderC.value);
+    const d = parseFloat(sliderD.value);
 
     valA.textContent = a.toFixed(1);
     valB.textContent = b.toFixed(1);
+    valC.textContent = c.toFixed(1);
+    valD.textContent = d.toFixed(1);
 
     ctx2d.clearRect(0, 0, canvas2d.width, canvas2d.height);
 
-    // Eixos Ortogonais Originais
+    // Eixos Ortogonais
     ctx2d.strokeStyle = '#33334d';
     ctx2d.lineWidth = 1;
     ctx2d.beginPath();
@@ -419,73 +537,55 @@
     ctx2d.moveTo(origin2d.x, 0); ctx2d.lineTo(origin2d.x, canvas2d.height);
     ctx2d.stroke();
 
-    // Deformação da Grade Matricial
-    ctx2d.strokeStyle = 'rgba(122, 162, 247, 0.25)';
-    ctx2d.lineWidth = 1;
-
-    for (let gx = -6; gx <= 6; gx++) {
+    // Grade Matricial Baseada em z1
+    ctx2d.strokeStyle = 'rgba(122, 162, 247, 0.15)';
+    for (let gx = -10; gx <= 10; gx++) {
       ctx2d.beginPath();
-      for (let gy = -6; gy <= 6; gy += 0.2) {
+      for (let gy = -10; gy <= 10; gy += 0.5) {
         let tx = a * gx - b * gy;
         let ty = b * gx + a * gy;
-        if (gy === -6) ctx2d.moveTo(toCanvasX(tx), toCanvasY(ty));
+        if (gy === -10) ctx2d.moveTo(toCanvasX(tx), toCanvasY(ty));
         else ctx2d.lineTo(toCanvasX(tx), toCanvasY(ty));
       }
       ctx2d.stroke();
     }
 
-    for (let gy = -6; gy <= 6; gy++) {
-      ctx2d.beginPath();
-      for (let gx = -6; gx <= 6; gx += 0.2) {
-        let tx = a * gx - b * gy;
-        let ty = b * gx + a * gy;
-        if (gx === -6) ctx2d.moveTo(toCanvasX(tx), toCanvasY(ty));
-        else ctx2d.lineTo(toCanvasX(tx), toCanvasY(ty));
-      }
-      ctx2d.stroke();
-    }
+    // Arco de Ângulo / Argumento de z1
+    const r1 = Math.sqrt(a * a + b * b);
+    let rad1 = Math.atan2(b, a);
+    if (rad1 < 0) rad1 += 2 * Math.PI;
+    let deg1 = rad1 * (180 / Math.PI);
 
-    // Geometria: Módulo e Ângulo
-    const r = Math.sqrt(a * a + b * b);
-    let rad = Math.atan2(b, a);
-    if (rad < 0) rad += 2 * Math.PI;
-    let deg = rad * (180 / Math.PI);
-
-    // Desenhar Arco de Ângulo
-    if (r > 0.05) {
+    if (r1 > 0.05) {
       ctx2d.strokeStyle = '#e0af68';
-      ctx2d.lineWidth = 2;
+      ctx2d.lineWidth = 1.5;
       ctx2d.beginPath();
-      ctx2d.arc(origin2d.x, origin2d.y, 30, 0, -rad, true);
+      ctx2d.arc(origin2d.x, origin2d.y, 25, 0, -rad1, true);
       ctx2d.stroke();
     }
 
-    // Vetor do Número Complexo
-    ctx2d.strokeStyle = '#f7768e';
-    ctx2d.lineWidth = 3;
-    ctx2d.beginPath();
-    ctx2d.moveTo(origin2d.x, origin2d.y);
-    ctx2d.lineTo(toCanvasX(a), toCanvasY(b));
-    ctx2d.stroke();
+    // Vetores no Plano
+    drawVector(a, b, '#f7768e', 'z₁');
+    drawVector(c, d, '#7dcfff', 'z₂');
+    drawVector(activeOpResult.a, activeOpResult.b, '#9ece6a', 'zR');
 
-    // Ponto na ponta do vetor
-    ctx2d.fillStyle = '#f7768e';
-    ctx2d.beginPath();
-    ctx2d.arc(toCanvasX(a), toCanvasY(b), 6, 0, 2 * Math.PI);
-    ctx2d.fill();
+    // Atualização de Informações
+    textZ1.textContent = formatComplex(a, b);
+    textZ2.textContent = formatComplex(c, d);
+    textZR.textContent = formatComplex(activeOpResult.a, activeOpResult.b);
 
-    // Atualização dos Card de Informações
-    const bSign = b >= 0 ? '+' : '-';
-    textRect.textContent = `${a.toFixed(2)} ${bSign} ${Math.abs(b).toFixed(2)}i`;
-    textEuler.textContent = `${r.toFixed(2)} · e^(i · ${deg.toFixed(1)}°)`;
+    infoMod1.textContent = r1.toFixed(2);
+    infoArg1.textContent = `${deg1.toFixed(1)}° (${rad1.toFixed(2)} rad)`;
+    infoConj1.textContent = formatComplex(a, -b);
+
     matrix2dText.textContent = `[ ${a.toFixed(1)} , ${(-b).toFixed(1)} ]\n[ ${b.toFixed(1)} , ${a.toFixed(1)} ]`;
-    infoModulus.textContent = r.toFixed(2);
-    infoAngle.textContent = deg.toFixed(1) + '°';
   }
 
-  sliderA.addEventListener('input', draw2D);
-  sliderB.addEventListener('input', draw2D);
-  draw2D();
+  [sliderA, sliderB, sliderC, sliderD].forEach(s => s.addEventListener('input', () => {
+    execOperation('add');
+  }));
+  
+  execOperation('add');
 
   // --- LÓGICA 3D (THREE.JS & QUATÉRNIOS) ---
   const container3d = document.getElementById('canvas3d-container');
@@ -566,7 +666,6 @@
       document.getElementById('valQuatC').textContent = qc.toFixed(2);
       document.getElementById('valQuatD').textContent = qd.toFixed(2);
 
-      // Normalizar Quatérnio
       let norm = Math.sqrt(qa*qa + qb*qb + qc*qc + qd*qd);
       if (norm === 0) { qa = 1; norm = 1; }
       qa /= norm; qb /= norm; qc /= norm; qd /= norm;
