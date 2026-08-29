@@ -2,176 +2,240 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Plano Interativo - Adicionar e Remover Objetos</title>
+  <title>A Abordagem Matricial dos Corpos Numéricos</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 0; background-color: #0b0f19; color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    .controles {
-      margin-bottom: 15px;
-      display: flex;
-      gap: 10px;
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 32px; background: #111827; border-bottom: 1px solid #1f2937;
     }
-    button {
-      padding: 10px 15px;
-      font-size: 14px;
-      cursor: pointer;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background-color: #f0f0f0;
+    .nav-btn {
+      background: #1f2937; color: #9ca3af; border: none; padding: 8px 16px;
+      border-radius: 6px; cursor: pointer; font-weight: 600; margin-left: 8px;
     }
-    button:hover {
-      background-color: #e0e0e0;
+    .nav-btn.active { background: #3b82f6; color: white; }
+
+    .main-container { display: flex; height: calc(100vh - 65px); }
+    .sidebar {
+      width: 320px; background: #111827; padding: 20px; border-right: 1px solid #1f2937;
+      display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
     }
-    button.btn-danger {
-      background-color: #ff4d4d;
-      color: white;
-      border: none;
+    .viewport { flex: 1; position: relative; }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .card-panel {
+      background: #1f2937; border-radius: 8px; padding: 14px; border: 1px solid #374151;
     }
-    button.btn-danger:hover {
-      background-color: #cc0000;
+    label { font-size: 0.85em; color: #9ca3af; display: block; margin-bottom: 4px; }
+    input[type="range"], input[type="number"] { width: 100%; margin-bottom: 10px; }
+    
+    .matrix-box {
+      background: #0b0f19; font-family: monospace; color: #4ade80;
+      padding: 10px; border-radius: 6px; text-align: center; margin-top: 8px;
     }
-    /* Área do Plano */
-    #plano {
-      width: 800px;
-      height: 500px;
-      border: 2px dashed #888;
-      background-color: #fafafa;
-      position: relative;
-      overflow: hidden;
+    
+    .btn-action {
+      width: 100%; padding: 10px; border: none; border-radius: 6px;
+      font-weight: bold; cursor: pointer; background: #2563eb; color: white;
     }
-    /* Estilo dos objetos no plano */
-    .objeto {
-      position: absolute;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      user-select: none;
-      cursor: move;
-      border-radius: 6px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .objeto.mesa {
-      width: 100px;
-      height: 60px;
-      background-color: #4A90E2;
-    }
-    .objeto.cadeira {
-      width: 40px;
-      height: 40px;
-      background-color: #50E3C2;
-      color: #333;
-    }
-    /* Objeto selecionado */
-    .objeto.selecionado {
-      outline: 3px solid #ff9900;
+    .btn-action:hover { background: #1d4ed8; }
+    .btn-danger { background: #ef4444; margin-top: 4px; }
+    .btn-danger:hover { background: #dc2626; }
+
+    .object-item {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #111827; padding: 8px 10px; border-radius: 6px; margin-top: 6px; font-size: 0.85em;
     }
   </style>
 </head>
 <body>
 
-  <h2>Plano Interativo</h2>
+  <header>
+    <h2>A Abordagem Matricial dos Corpos Numéricos</h2>
+    <div>
+      <button class="nav-btn active" id="btn-modo-2d" onclick="setModo('2D')">Modo 2D (Ensino Médio)</button>
+      <button class="nav-btn" id="btn-modo-3d" onclick="setModo('3D')">Modo 3D (Extensão)</button>
+    </div>
+  </header>
 
-  <div class="controles">
-    <button onclick="adicionarObjeto('mesa')">+ Adicionar Mesa</button>
-    <button onclick="adicionarObjeto('cadeira')">+ Adicionar Cadeira</button>
-    <button class="btn-danger" onclick="removerSelecionado()">- Remover Selecionado</button>
-    <button onclick="limparPlano()">Limpar Tudo</button>
+  <div class="main-container">
+    <div class="sidebar" id="panel-2d">
+      <h3>Parâmetros no Plano ($\mathbb{R}^2$)</h3>
+      <div class="card-panel">
+        <label>Parte Real ($a$): <span id="val-a">1.5</span></label>
+        <input type="range" id="inp-a" min="-5" max="5" step="0.1" value="1.5" oninput="atualizarInputs2D()">
+
+        <label>Parte Imaginária ($b$): <span id="val-b">1.8</span></label>
+        <input type="range" id="inp-b" min="-5" max="5" step="0.1" value="1.8" oninput="atualizarInputs2D()">
+
+        <div class="matrix-box" id="matrix-2d-display">
+          [ 1.5 , -1.8 ]<br>[ 1.8 ,  1.5 ]
+        </div>
+      </div>
+
+      <button class="btn-action" onclick="adicionarObjeto2D()">+ Adicionar Vetor ao Plano</button>
+      
+      <h4>Objetos no Plano</h4>
+      <div id="lista-objetos-2d"></div>
+    </div>
+
+    <div class="sidebar" id="panel-3d" style="display:none;">
+      <h3>Transformação no Espaço ($\mathbb{R}^3$)</h3>
+      <div class="card-panel">
+        <label>Rotação X ($\theta_x$): <span id="val-rx">0</span>°</label>
+        <input type="range" id="inp-rx" min="0" max="360" value="0" oninput="atualizarInputs3D()">
+
+        <label>Rotação Y ($\theta_y$): <span id="val-ry">0</span>°</label>
+        <input type="range" id="inp-ry" min="0" max="360" value="0" oninput="atualizarInputs3D()">
+
+        <label>Rotação Z ($\theta_z$): <span id="val-rz">0</span>°</label>
+        <input type="range" id="inp-rz" min="0" max="360" value="0" oninput="atualizarInputs3D()">
+
+        <label>Escala ($r$): <span id="val-r">1.0</span></label>
+        <input type="range" id="inp-r" min="0.1" max="3" step="0.1" value="1.0" oninput="atualizarInputs3D()">
+      </div>
+
+      <button class="btn-action" onclick="adicionarObjeto3D()">+ Adicionar Poliedro ao Espaço</button>
+      
+      <h4>Objetos no Espaço</h4>
+      <div id="lista-objetos-3d"></div>
+    </div>
+
+    <div class="viewport" id="viewport">
+      <canvas id="canvas-2d"></canvas>
+    </div>
   </div>
 
-  <div id="plano"></div>
-
   <script>
-    const plano = document.getElementById('plano');
-    let objetoSelecionado = null;
-    let contador = 0;
+    let modoAtual = '2D';
+    let objetos2D = [];
+    let objetos3D = [];
 
-    // Função para adicionar objetos ao plano
-    function adicionarObjeto(tipo) {
-      contador++;
-      const el = document.createElement('div');
-      el.classList.add('objeto', tipo);
-      el.innerText = `${tipo.toUpperCase()} ${contador}`;
-      
-      // Posição inicial no centro do plano
-      el.style.left = '50px';
-      el.style.top = '50px';
+    // --- TROCA DE MODOS ---
+    function setModo(modo) {
+      modoAtual = modo;
+      document.getElementById('btn-modo-2d').classList.toggle('active', modo === '2D');
+      document.getElementById('btn-modo-3d').classList.toggle('active', modo === '3D');
+      document.getElementById('panel-2d').style.display = modo === '2D' ? 'flex' : 'none';
+      document.getElementById('panel-3d').style.display = modo === '3D' ? 'flex' : 'none';
+      render();
+    }
 
-      // Evento de seleção
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selecionarObjeto(el);
+    // --- LÓGICA 2D ---
+    function atualizarInputs2D() {
+      const a = parseFloat(document.getElementById('inp-a').value);
+      const b = parseFloat(document.getElementById('inp-b').value);
+      document.getElementById('val-a').innerText = a;
+      document.getElementById('val-b').innerText = b;
+      document.getElementById('matrix-2d-display').innerHTML = 
+        `[ ${a.toFixed(1)} , ${(-b).toFixed(1)} ]<br>[ ${b.toFixed(1)} , ${a.toFixed(1)} ]`;
+      render();
+    }
+
+    function adicionarObjeto2D() {
+      const a = parseFloat(document.getElementById('inp-a').value);
+      const b = parseFloat(document.getElementById('inp-b').value);
+      objetos2D.push({ id: Date.now(), a, b });
+      atualizarLista2D();
+      render();
+    }
+
+    function removerObjeto2D(id) {
+      objetos2D = objetos2D.filter(o => o.id !== id);
+      atualizarLista2D();
+      render();
+    }
+
+    function atualizarLista2D() {
+      const el = document.getElementById('lista-objetos-2d');
+      el.innerHTML = '';
+      objetos2D.forEach((obj, i) => {
+        el.innerHTML += `
+          <div class="object-item">
+            <span><b>z${i+1}:</b> ${obj.a} + ${obj.b}i</span>
+            <button class="nav-btn btn-danger" onclick="removerObjeto2D(${obj.id})">Tirar</button>
+          </div>`;
       });
-
-      // Tornar o objeto arrastável
-      tornarArrastavel(el);
-
-      plano.appendChild(el);
-      selecionarObjeto(el);
     }
 
-    // Função para selecionar um objeto
-    function selecionarObjeto(el) {
-      if (objetoSelecionado) {
-        objetoSelecionado.classList.remove('selecionado');
-      }
-      objetoSelecionado = el;
-      objetoSelecionado.classList.add('selecionado');
+    // --- LÓGICA 3D ---
+    function atualizarInputs3D() {
+      document.getElementById('val-rx').innerText = document.getElementById('inp-rx').value;
+      document.getElementById('val-ry').innerText = document.getElementById('inp-ry').value;
+      document.getElementById('val-rz').innerText = document.getElementById('inp-rz').value;
+      document.getElementById('val-r').innerText = document.getElementById('inp-r').value;
     }
 
-    // Desselecionar ao clicar no fundo do plano
-    plano.addEventListener('click', () => {
-      if (objetoSelecionado) {
-        objetoSelecionado.classList.remove('selecionado');
-        objetoSelecionado = null;
-      }
-    });
-
-    // Função para remover o objeto selecionado
-    function removerSelecionado() {
-      if (objetoSelecionado) {
-        plano.removeChild(objetoSelecionado);
-        objetoSelecionado = null;
-      } else {
-        alert('Selecione um objeto no plano para remover!');
-      }
+    function adicionarObjeto3D() {
+      const rx = document.getElementById('inp-rx').value;
+      const ry = document.getElementById('inp-ry').value;
+      const rz = document.getElementById('inp-rz').value;
+      const r  = document.getElementById('inp-r').value;
+      objetos3D.push({ id: Date.now(), rx, ry, rz, r });
+      atualizarLista3D();
     }
 
-    // Limpar todo o plano
-    function limparPlano() {
-      plano.innerHTML = '';
-      objetoSelecionado = null;
+    function removerObjeto3D(id) {
+      objetos3D = objetos3D.filter(o => o.id !== id);
+      atualizarLista3D();
     }
 
-    // Lógica para arrastar os elementos
-    function tornarArrastavel(el) {
-      let posX = 0, posY = 0, mouseX = 0, mouseY = 0;
-
-      el.onmousedown = function(e) {
-        e.preventDefault();
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-
-        document.onmousemove = function(e) {
-          e.preventDefault();
-          posX = mouseX - e.clientX;
-          posY = mouseY - e.clientY;
-          mouseX = e.clientX;
-          mouseY = e.clientY;
-
-          el.style.top = (el.offsetTop - posY) + "px";
-          el.style.left = (el.offsetLeft - posX) + "px";
-        };
-
-        document.onmouseup = function() {
-          document.onmousemove = null;
-          document.onmouseup = null;
-        };
-      };
+    function atualizarLista3D() {
+      const el = document.getElementById('lista-objetos-3d');
+      el.innerHTML = '';
+      objetos3D.forEach((obj, i) => {
+        el.innerHTML += `
+          <div class="object-item">
+            <span><b>Obj ${i+1}:</b> Rot(${obj.rx}°,${obj.ry}°,${obj.rz}°)</span>
+            <button class="nav-btn btn-danger" onclick="removerObjeto3D(${obj.id})">Tirar</button>
+          </div>`;
+      });
     }
+
+    // --- RENDERIZAÇÃO DO CANVAS 2D ---
+    const canvas = document.getElementById('canvas-2d');
+    const ctx = canvas.getContext('2d');
+
+    function render() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (modoAtual !== '2D') return;
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const scale = 40;
+
+      // Desempenhar Grade
+      ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 1;
+      for(let x = 0; x < canvas.width; x += scale) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+      for(let y = 0; y < canvas.height; y += scale) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
+
+      // Eixos principais
+      ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height); ctx.stroke();
+
+      // Desenhar Objetos Armazenados
+      objetos2D.forEach((obj) => {
+        const px = cx + obj.a * scale;
+        const py = cy - obj.b * scale;
+
+        ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+
+        ctx.fillStyle = '#f43f5e';
+        ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
+      });
+    }
+
+    window.addEventListener('resize', render);
+    render();
   </script>
 </body>
 </html>
