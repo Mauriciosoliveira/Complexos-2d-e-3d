@@ -73,8 +73,8 @@
   <header>
     <h1>Laboratório Interativo de Números Complexos</h1>
     <div class="tabs">
-      <button class="tab-btn active" onclick="setTab('single')">1. Número Único ($z$)</button>
-      <button class="tab-btn" onclick="setTab('ops')">2. Operações ($z_1, z_2$)</button>
+      <button class="tab-btn active" onclick="setTab('single')">1. Número Único (z)</button>
+      <button class="tab-btn" onclick="setTab('ops')">2. Operações (z₁, z₂)</button>
       <button class="tab-btn" onclick="setTab('powers')">3. Potências & Raízes</button>
     </div>
   </header>
@@ -104,7 +104,7 @@
 
       <div class="card">
         <h2>Abordagem Matricial</h2>
-        <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px;">Isomorfismo $\mathbb{C} \cong \mathbf{M}_{2	imes2}(\mathbb{R})$:</p>
+        <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px;">Isomorfismo ℂ ≅ M₂ₓ₂(ℝ):</p>
         <div class="matrix-box" id="single-matrix">[  2.0 , -3.0 ]
 [  3.0 ,  2.0 ]</div>
         <div class="formula-badge" style="margin-top:8px;"><b>Determinante = |z|²:</b> <span id="single-det">13.00</span></div>
@@ -161,9 +161,9 @@
 
       <div class="card">
         <h2>Resultado & Geometria</h2>
-        <div class="formula-badge"><b>Valor de z_R:</b> <span id="op-res-val">3.0 + 3.5i</span></div>
+        <div class="formula-badge"><b>Valor de z<sub>R</sub>:</b> <span id="op-res-val">3.0 + 3.5i</span></div>
         <div class="formula-badge" id="op-expl-1">Regra do Paralelogramo (Soma Vetorial)</div>
-        <div class="formula-badge" id="op-expl-2">|z_R| = |z₁ + z₂|</div>
+        <div class="formula-badge" id="op-expl-2">|z<sub>R</sub>| = |z₁ + z₂|</div>
       </div>
     </div>
 
@@ -209,6 +209,18 @@
     // Canvas setup
     const canvas = document.getElementById('complexCanvas');
     const ctx = canvas.getContext('2d');
+
+    // Auxiliar para caracteres sobrescritos (ex: z², z³, z⁴)
+    function getSuperscript(num) {
+      const superscripts = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+      return num.toString().split('').map(digit => superscripts[digit] || digit).join('');
+    }
+
+    // Auxiliar para caracteres subscritos (ex: w₀, w₁, w₂)
+    function getSubscript(num) {
+      const subscripts = { '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉' };
+      return num.toString().split('').map(digit => subscripts[digit] || digit).join('');
+    }
 
     function resizeCanvas() {
       const container = document.getElementById('canvas-container');
@@ -417,7 +429,7 @@
           if (denom > 0) { ra = (a1*a2 + b1*b2)/denom; rb = (b1*a2 - a1*b2)/denom; }
         }
 
-        drawVector(cx, cy, ra*scale, rb*scale, '#f43f5e', 'z_R');
+        drawVector(cx, cy, ra*scale, rb*scale, '#f43f5e', 'zᵣ');
 
       } else if (currentTab === 'powers') {
         const ap = parseFloat(document.getElementById('inp-ap').value);
@@ -428,15 +440,20 @@
         const theta = Math.atan2(bp, ap);
 
         if (powerMode === 'pow') {
-          let lastX = cx, lastY = cy;
-          ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.5; ctx.beginPath();
           for (let k = 1; k <= n; k++) {
             const mk = Math.pow(mod, k);
             const tk = theta * k;
-            const x = cx + mk * Math.cos(tk) * scale;
-            const y = cy - mk * Math.sin(tk) * scale;
-
-            drawVector(cx, cy, mk * Math.cos(tk) * scale, mk * Math.sin(tk) * scale, k === n ? '#f43f5e' : '#38bdf8', `z${k > 1 ? 'ⁿ' : ''}`);
+            
+            // Define o rótulo da potência dinamicamente: z, z², z³, z⁴...
+            const vectorLabel = k === 1 ? 'z' : `z${getSuperscript(k)}`;
+            
+            drawVector(
+              cx, cy, 
+              mk * Math.cos(tk) * scale, 
+              mk * Math.sin(tk) * scale, 
+              k === n ? '#f43f5e' : '#38bdf8', 
+              vectorLabel
+            );
           }
         } else {
           // Roots - Circle & Regular Polygon
@@ -450,7 +467,7 @@
             const x = cx + rRoot * Math.cos(tk) * scale;
             const y = cy - rRoot * Math.sin(tk) * scale;
             rootCoords.push({ x, y });
-            drawVector(cx, cy, rRoot * Math.cos(tk) * scale, rRoot * Math.sin(tk) * scale, '#4ade80', `w${k}`);
+            drawVector(cx, cy, rRoot * Math.cos(tk) * scale, rRoot * Math.sin(tk) * scale, '#4ade80', `w${getSubscript(k)}`);
           }
 
           // Polygon connecting roots
