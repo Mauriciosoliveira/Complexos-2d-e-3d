@@ -2,799 +2,176 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visualizador Geométrico de Corpos: 2D & 3D</title>
+  <title>Plano Interativo - Adicionar e Remover Objetos</title>
   <style>
-    :root {
-      --bg: #0f0f17;
-      --card-bg: rgba(23, 23, 35, 0.94);
-      --accent: #7aa2f7;
-      --accent-hover: #bb9af7;
-      --text: #c0caf5;
-      --border: #33334d;
-      --success: #9ece6a;
-      --pink: #f7768e;
-      --cyan: #7dcfff;
-      --yellow: #e0af68;
-    }
-
-    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .controles {
+      margin-bottom: 15px;
       display: flex;
-      flex-direction: column;
+      gap: 10px;
     }
-
-    header {
-      background: #161622;
-      border-bottom: 1px solid var(--border);
-      padding: 12px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 1.2rem;
-      color: var(--accent);
-    }
-
-    .tabs {
-      display: flex;
-      gap: 8px;
-      background: #09090e;
-      padding: 4px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: #a9b1d6;
-      padding: 8px 16px;
-      border-radius: 6px;
+    button {
+      padding: 10px 15px;
+      font-size: 14px;
       cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s ease;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #f0f0f0;
     }
-
-    .tab-btn.active {
-      background: var(--accent);
-      color: #0f0f17;
+    button:hover {
+      background-color: #e0e0e0;
     }
-
-    .tab-btn:hover:not(.active) {
-      color: #fff;
-      background: rgba(255,255,255,0.08);
+    button.btn-danger {
+      background-color: #ff4d4d;
+      color: white;
+      border: none;
     }
-
-    .content-area {
-      flex: 1;
+    button.btn-danger:hover {
+      background-color: #cc0000;
+    }
+    /* Área do Plano */
+    #plano {
+      width: 800px;
+      height: 500px;
+      border: 2px dashed #888;
+      background-color: #fafafa;
       position: relative;
       overflow: hidden;
     }
-
-    .tab-content {
-      display: none;
-      width: 100%;
-      height: 100%;
+    /* Estilo dos objetos no plano */
+    .objeto {
       position: absolute;
-      top: 0;
-      left: 0;
-    }
-
-    .tab-content.active {
       display: flex;
-    }
-
-    #view2d {
-      padding: 20px;
-      gap: 20px;
-      justify-content: center;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      overflow-y: auto;
-    }
-
-    canvas#canvas2d {
-      background: #11111b;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }
-
-    .controls {
-      background: var(--card-bg);
-      padding: 18px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      width: 400px;
-      backdrop-filter: blur(8px);
-      max-height: calc(100vh - 90px);
-      overflow-y: auto;
-    }
-
-    .control-group { margin-bottom: 10px; }
-    label { display: block; margin-bottom: 3px; font-size: 0.83em; color: #a9b1d6; }
-    input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
-
-    .section-title {
-      font-size: 0.88em;
-      font-weight: bold;
-      color: var(--accent);
-      margin: 14px 0 6px 0;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 4px;
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-    }
-
-    .btn-grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 5px;
-      margin-bottom: 8px;
-    }
-
-    .btn-action {
-      background: #1f1f2e;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 6px 4px;
-      border-radius: 6px;
-      font-size: 0.78em;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.2s;
-    }
-
-    .btn-action:hover {
-      border-color: var(--accent);
-      color: #fff;
-      background: rgba(122, 162, 247, 0.2);
-    }
-
-    .btn-action.primary {
-      background: rgba(122, 162, 247, 0.15);
-      border-color: var(--accent);
-    }
-
-    .info-card {
-      background: #16161e;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      font-size: 0.82em;
-      margin-bottom: 8px;
-      line-height: 1.5;
-    }
-
-    .matrix-display {
-      font-family: monospace;
-      background: #16161e;
-      padding: 8px;
-      border-radius: 8px;
-      text-align: center;
-      font-size: 0.82em;
-      color: var(--success);
-      border: 1px solid var(--border);
-      white-space: pre;
-    }
-
-    #view3d { position: relative; }
-    #canvas3d-container { width: 100%; height: 100%; }
-
-    #ui3d {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      z-index: 10;
-    }
-
-    #info3d {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      background: var(--card-bg);
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-size: 0.83em;
-      border: 1px solid var(--border);
-    }
-
-    .mode-selector {
-      display: flex;
-      background: #10101a;
-      border-radius: 6px;
-      padding: 2px;
-      margin-bottom: 12px;
-      border: 1px solid var(--border);
-    }
-
-    .mode-btn {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #a9b1d6;
-      padding: 6px;
-      font-size: 0.8em;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .mode-btn.active {
-      background: var(--accent);
-      color: #0f0f17;
+      justify-content: center;
+      color: white;
       font-weight: bold;
+      user-select: none;
+      cursor: move;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .objeto.mesa {
+      width: 100px;
+      height: 60px;
+      background-color: #4A90E2;
+    }
+    .objeto.cadeira {
+      width: 40px;
+      height: 40px;
+      background-color: #50E3C2;
+      color: #333;
+    }
+    /* Objeto selecionado */
+    .objeto.selecionado {
+      outline: 3px solid #ff9900;
     }
   </style>
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
-  <header>
-    <h1>A Abordagem Matricial dos Corpos Numéricos</h1>
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('2d')">Modo 2D (Corpo C)</button>
-      <button class="tab-btn" onclick="switchTab('3d')">Modo 3D (Corpo H & R³)</button>
-    </div>
-  </header>
+  <h2>Plano Interativo</h2>
 
-  <div class="content-area">
-    
-    <!-- MODO 2D -->
-    <div id="view2d" class="tab-content active">
-      <canvas id="canvas2d" width="500" height="500"></canvas>
-      
-      <div class="controls">
-        <!-- Z1 CONTROLES INDIVIDUAIS -->
-        <div class="section-title">
-          <span>Número Complexo z₁</span>
-          <span style="color:var(--pink)">■ Rosa</span>
-        </div>
-        <div class="control-group">
-          <label for="sliderA">Parte Real (a₁): <b id="valA">2.0</b></label>
-          <input type="range" id="sliderA" min="-10" max="10" step="0.1" value="2.0">
-        </div>
-        <div class="control-group">
-          <label for="sliderB">Parte Imaginária (b₁): <b id="valB">2.0</b></label>
-          <input type="range" id="sliderB" min="-10" max="10" step="0.1" value="2.0">
-        </div>
-        <div class="btn-grid-4">
-          <button class="btn-action" onclick="execIndiv2D(1, 'conj')">Conj. z̄₁</button>
-          <button class="btn-action" onclick="execIndiv2D(1, 'rot90')">+90° (×i)</button>
-          <button class="btn-action" onclick="execIndiv2D(1, 'norm')">Norm (|z|=1)</button>
-          <button class="btn-action" onclick="execIndiv2D(1, 'reset')">Reset</button>
-        </div>
-
-        <!-- Z2 CONTROLES INDIVIDUAIS -->
-        <div class="section-title">
-          <span>Número Complexo z₂</span>
-          <span style="color:var(--cyan)">■ Ciano</span>
-        </div>
-        <div class="control-group">
-          <label for="sliderC">Parte Real (a₂): <b id="valC">1.0</b></label>
-          <input type="range" id="sliderC" min="-10" max="10" step="0.1" value="1.0">
-        </div>
-        <div class="control-group">
-          <label for="sliderD">Parte Imaginária (b₂): <b id="valD">-1.0</b></label>
-          <input type="range" id="sliderD" min="-10" max="10" step="0.1" value="-1.0">
-        </div>
-        <div class="btn-grid-4">
-          <button class="btn-action" onclick="execIndiv2D(2, 'conj')">Conj. z̄₂</button>
-          <button class="btn-action" onclick="execIndiv2D(2, 'rot90')">+90° (×i)</button>
-          <button class="btn-action" onclick="execIndiv2D(2, 'norm')">Norm (|z|=1)</button>
-          <button class="btn-action" onclick="execIndiv2D(2, 'reset')">Reset</button>
-        </div>
-
-        <!-- OPERAÇÕES COMBINADAS -->
-        <div class="section-title">Operações entre z₁ e z₂ → <span style="color:var(--success)">zR (Verde)</span></div>
-        <div class="btn-grid-4">
-          <button class="btn-action primary" onclick="execBin2D('add')">z₁ + z₂</button>
-          <button class="btn-action primary" onclick="execBin2D('sub')">z₁ - z₂</button>
-          <button class="btn-action primary" onclick="execBin2D('mult')">z₁ · z₂</button>
-          <button class="btn-action primary" onclick="execBin2D('div')">z₁ / z₂</button>
-        </div>
-
-        <!-- EXIBIÇÃO DE VALORES E MATRIZES -->
-        <div class="info-card">
-          • z₁ = <span id="textZ1" style="color:var(--pink)">2.00 + 2.00i</span> | |z₁| = <b id="infoMod1">2.83</b> | Arg: <b id="infoArg1">45.0°</b><br>
-          • z₂ = <span id="textZ2" style="color:var(--cyan)">1.00 - 1.00i</span> | |z₂| = <b id="infoMod2">1.41</b> | Arg: <b id="infoArg2">315.0°</b><br>
-          • Resultado (z<sub>R</sub>) = <span id="textZR" style="color:var(--success)">3.00 + 1.00i</span>
-        </div>
-
-        <div class="control-group">
-          <label>Matriz 2x2 do Resultado (zR):</label>
-          <div class="matrix-display" id="matrix2dText">[ 3.0 , -1.0 ]&#10;[ 1.0 ,  3.0 ]</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODO 3D -->
-    <div id="view3d" class="tab-content">
-      <div id="canvas3d-container"></div>
-      
-      <div class="controls" id="ui3d">
-        <h3>Transformação no Espaço (R³)</h3>
-        
-        <div class="mode-selector">
-          <button class="mode-btn active" id="btnModeQuat" onclick="setMode3D('quat')">Quatérnios (H)</button>
-          <button class="mode-btn" id="btnModeEuler" onclick="setMode3D('euler')">Ângulos de Euler</button>
-        </div>
-
-        <!-- PAINEL QUATÉRNIOS -->
-        <div id="panelQuat">
-          <div class="section-title">Quatérnio q₁ <span style="color:var(--pink)">■ Rosa (Esq.)</span></div>
-          <div class="control-group"><label>Escalar (w₁): <b id="valW1">1.0</b></label><input type="range" id="quatW1" min="-3" max="3" step="0.05" value="1.0"></div>
-          <div class="control-group"><label>Eixo i (x₁): <b id="valX1">0.0</b></label><input type="range" id="quatX1" min="-3" max="3" step="0.05" value="0.0"></div>
-          <div class="control-group"><label>Eixo j (y₁): <b id="valY1">0.5</b></label><input type="range" id="quatY1" min="-3" max="3" step="0.05" value="0.5"></div>
-          <div class="control-group"><label>Eixo k (z₁): <b id="valZ1">0.0</b></label><input type="range" id="quatZ1" min="-3" max="3" step="0.05" value="0.0"></div>
-          <div class="btn-grid-4">
-            <button class="btn-action" onclick="execQuatAction(1, 'conj')">Conj. q₁*</button>
-            <button class="btn-action" onclick="execQuatAction(1, 'norm')">Norm (|q|=1)</button>
-            <button class="btn-action" onclick="execQuatAction(1, 'inv')">Inverso q₁⁻¹</button>
-            <button class="btn-action" onclick="execQuatAction(1, 'reset')">Reset</button>
-          </div>
-
-          <div class="section-title">Quatérnio q₂ <span style="color:var(--cyan)">■ Ciano (Centro)</span></div>
-          <div class="control-group"><label>Escalar (w₂): <b id="valW2">0.71</b></label><input type="range" id="quatW2" min="-3" max="3" step="0.05" value="0.71"></div>
-          <div class="control-group"><label>Eixo i (x₂): <b id="valX2">0.71</b></label><input type="range" id="quatX2" min="-3" max="3" step="0.05" value="0.71"></div>
-          <div class="control-group"><label>Eixo j (y₂): <b id="valY2">0.0</b></label><input type="range" id="quatY2" min="-3" max="3" step="0.05" value="0.0"></div>
-          <div class="control-group"><label>Eixo k (z₂): <b id="valZ2">0.0</b></label><input type="range" id="quatZ2" min="-3" max="3" step="0.05" value="0.0"></div>
-          <div class="btn-grid-4">
-            <button class="btn-action" onclick="execQuatAction(2, 'conj')">Conj. q₂*</button>
-            <button class="btn-action" onclick="execQuatAction(2, 'norm')">Norm (|q|=1)</button>
-            <button class="btn-action" onclick="execQuatAction(2, 'inv')">Inverso q₂⁻¹</button>
-            <button class="btn-action" onclick="execQuatAction(2, 'reset')">Reset</button>
-          </div>
-
-          <div class="section-title">Composição 3D → <span style="color:var(--success)">qR = q₁ · q₂ (Dir.)</span></div>
-          <div class="btn-grid-4">
-            <button class="btn-action primary" onclick="execQuatOp('mult')">q₁ · q₂ (Girar)</button>
-            <button class="btn-action primary" onclick="execQuatOp('add')">q₁ + q₂</button>
-            <button class="btn-action primary" onclick="execQuatOp('sub')">q₁ - q₂</button>
-            <button class="btn-action primary" onclick="execQuatOp('swap')">Inverter Order</button>
-          </div>
-        </div>
-
-        <!-- PAINEL EULER -->
-        <div id="panelEuler" style="display: none;">
-          <div class="section-title">Rotação Corpo 1 (&theta;₁)</div>
-          <div class="control-group"><label>Eixo X (&theta;x): <b id="valX1E">0</b>&deg;</label><input type="range" id="rotX1" min="-360" max="360" value="0"></div>
-          <div class="control-group"><label>Eixo Y (&theta;y): <b id="valY1E">45</b>&deg;</label><input type="range" id="rotY1" min="-360" max="360" value="45"></div>
-          <div class="control-group"><label>Eixo Z (&theta;z): <b id="valZ1E">0</b>&deg;</label><input type="range" id="rotZ1" min="-360" max="360" value="0"></div>
-
-          <div class="section-title">Rotação Corpo 2 (&theta;₂)</div>
-          <div class="control-group"><label>Eixo X (&theta;x): <b id="valX2E">90</b>&deg;</label><input type="range" id="rotX2" min="-360" max="360" value="90"></div>
-          <div class="control-group"><label>Eixo Y (&theta;y): <b id="valY2E">0</b>&deg;</label><input type="range" id="rotY2" min="-360" max="360" value="0"></div>
-          <div class="control-group"><label>Eixo Z (&theta;z): <b id="valZ2E">0</b>&deg;</label><input type="range" id="rotZ2" min="-360" max="360" value="0"></div>
-        </div>
-
-        <div class="control-group" style="margin-top:10px;">
-          <label for="scale">Escala dos Objetos (Fator r): <b id="valScale">1.0</b></label>
-          <input type="range" id="scale" min="0.1" max="3.0" step="0.1" value="1.0">
-        </div>
-
-        <label>Matriz 3x3 de Rotação do Resultado (qR):</label>
-        <div class="matrix-display" id="matrix3dDisplay"></div>
-      </div>
-
-      <div id="info3d">
-        • Esquerda (Rosa): q₁ | Centro (Ciano): q₂ | Direita (Verde): qR (Composição)<br>
-        • Arraste o mouse para girar a câmera 3D. Scroll para Zoom.
-      </div>
-    </div>
-
+  <div class="controles">
+    <button onclick="adicionarObjeto('mesa')">+ Adicionar Mesa</button>
+    <button onclick="adicionarObjeto('cadeira')">+ Adicionar Cadeira</button>
+    <button class="btn-danger" onclick="removerSelecionado()">- Remover Selecionado</button>
+    <button onclick="limparPlano()">Limpar Tudo</button>
   </div>
 
-<script>
-  // --- NAVEGAÇÃO ENTRE ABAS ---
-  function switchTab(mode) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  <div id="plano"></div>
 
-    if (mode === '2d') {
-      document.querySelectorAll('.tab-btn')[0].classList.add('active');
-      document.getElementById('view2d').classList.add('active');
-    } else {
-      document.querySelectorAll('.tab-btn')[1].classList.add('active');
-      document.getElementById('view3d').classList.add('active');
-      onWindowResize3D();
-    }
-  }
+  <script>
+    const plano = document.getElementById('plano');
+    let objetoSelecionado = null;
+    let contador = 0;
 
-  // --- LÓGICA MODO 2D ---
-  const canvas2d = document.getElementById('canvas2d');
-  const ctx2d = canvas2d.getContext('2d');
-  
-  const sliderA = document.getElementById('sliderA');
-  const sliderB = document.getElementById('sliderB');
-  const sliderC = document.getElementById('sliderC');
-  const sliderD = document.getElementById('sliderD');
+    // Função para adicionar objetos ao plano
+    function adicionarObjeto(tipo) {
+      contador++;
+      const el = document.createElement('div');
+      el.classList.add('objeto', tipo);
+      el.innerText = `${tipo.toUpperCase()} ${contador}`;
+      
+      // Posição inicial no centro do plano
+      el.style.left = '50px';
+      el.style.top = '50px';
 
-  const valA = document.getElementById('valA');
-  const valB = document.getElementById('valB');
-  const valC = document.getElementById('valC');
-  const valD = document.getElementById('valD');
+      // Evento de seleção
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selecionarObjeto(el);
+      });
 
-  const textZ1 = document.getElementById('textZ1');
-  const textZ2 = document.getElementById('textZ2');
-  const textZR = document.getElementById('textZR');
-  
-  const infoMod1 = document.getElementById('infoMod1');
-  const infoArg1 = document.getElementById('infoArg1');
-  const infoMod2 = document.getElementById('infoMod2');
-  const infoArg2 = document.getElementById('infoArg2');
-  const matrix2dText = document.getElementById('matrix2dText');
+      // Tornar o objeto arrastável
+      tornarArrastavel(el);
 
-  const origin2d = { x: canvas2d.width / 2, y: canvas2d.height / 2 };
-  const scale2d = 22;
-
-  let current2DOp = 'add';
-
-  function toCanvasX(x) { return origin2d.x + x * scale2d; }
-  function toCanvasY(y) { return origin2d.y - y * scale2d; }
-
-  function formatComplex(a, b) {
-    const sign = b >= 0 ? '+' : '-';
-    return `${a.toFixed(2)} ${sign} ${Math.abs(b).toFixed(2)}i`;
-  }
-
-  // Ações individuais sobre Z1 ou Z2
-  function execIndiv2D(target, action) {
-    let sReal = target === 1 ? sliderA : sliderC;
-    let sImag = target === 1 ? sliderB : sliderD;
-
-    let a = parseFloat(sReal.value);
-    let b = parseFloat(sImag.value);
-
-    if (action === 'conj') {
-      b = -b;
-    } else if (action === 'rot90') {
-      let temp = a; a = -b; b = temp;
-    } else if (action === 'norm') {
-      let mod = Math.sqrt(a * a + b * b);
-      if (mod > 0) { a /= mod; b /= mod; }
-    } else if (action === 'reset') {
-      a = target === 1 ? 2.0 : 1.0;
-      b = target === 1 ? 2.0 : -1.0;
+      plano.appendChild(el);
+      selecionarObjeto(el);
     }
 
-    sReal.value = a.toFixed(1);
-    sImag.value = b.toFixed(1);
-    draw2D();
-  }
-
-  // Operações binárias entre Z1 e Z2
-  function execBin2D(op) {
-    current2DOp = op;
-    draw2D();
-  }
-
-  function drawVector(x, y, color, label) {
-    const cx = toCanvasX(x);
-    const cy = toCanvasY(y);
-
-    ctx2d.strokeStyle = color;
-    ctx2d.fillStyle = color;
-    ctx2d.lineWidth = 2.5;
-
-    ctx2d.beginPath();
-    ctx2d.moveTo(origin2d.x, origin2d.y);
-    ctx2d.lineTo(cx, cy);
-    ctx2d.stroke();
-
-    const angle = Math.atan2(origin2d.y - cy, cx - origin2d.x);
-    const headLen = 8;
-    ctx2d.beginPath();
-    ctx2d.moveTo(cx, cy);
-    ctx2d.lineTo(cx - headLen * Math.cos(angle - Math.PI / 6), cy + headLen * Math.sin(angle - Math.PI / 6));
-    ctx2d.lineTo(cx - headLen * Math.cos(angle + Math.PI / 6), cy + headLen * Math.sin(angle + Math.PI / 6));
-    ctx2d.fill();
-
-    ctx2d.font = 'bold 12px sans-serif';
-    ctx2d.fillText(label, cx + 8, cy - 8);
-  }
-
-  function draw2D() {
-    const a = parseFloat(sliderA.value);
-    const b = parseFloat(sliderB.value);
-    const c = parseFloat(sliderC.value);
-    const d = parseFloat(sliderD.value);
-
-    valA.textContent = a.toFixed(1);
-    valB.textContent = b.toFixed(1);
-    valC.textContent = c.toFixed(1);
-    valD.textContent = d.toFixed(1);
-
-    // Cálculo do Resultado zR
-    let resA = 0, resB = 0;
-    if (current2DOp === 'add') { resA = a + c; resB = b + d; }
-    else if (current2DOp === 'sub') { resA = a - c; resB = b - d; }
-    else if (current2DOp === 'mult') { resA = a * c - b * d; resB = a * d + b * c; }
-    else if (current2DOp === 'div') {
-      let denom = c * c + d * d;
-      if (denom === 0) { resA = 0; resB = 0; }
-      else { resA = (a * c + b * d) / denom; resB = (b * c - a * d) / denom; }
-    }
-
-    ctx2d.clearRect(0, 0, canvas2d.width, canvas2d.height);
-
-    // Eixos Ortogonais
-    ctx2d.strokeStyle = '#33334d';
-    ctx2d.lineWidth = 1;
-    ctx2d.beginPath();
-    ctx2d.moveTo(0, origin2d.y); ctx2d.lineTo(canvas2d.width, origin2d.y);
-    ctx2d.moveTo(origin2d.x, 0); ctx2d.lineTo(origin2d.x, canvas2d.height);
-    ctx2d.stroke();
-
-    // Grade de Deformação baseada em zR
-    ctx2d.strokeStyle = 'rgba(122, 162, 247, 0.12)';
-    for (let gx = -10; gx <= 10; gx++) {
-      ctx2d.beginPath();
-      for (let gy = -10; gy <= 10; gy += 0.5) {
-        let tx = resA * gx - resB * gy;
-        let ty = resB * gx + resA * gy;
-        if (gy === -10) ctx2d.moveTo(toCanvasX(tx), toCanvasY(ty));
-        else ctx2d.lineTo(toCanvasX(tx), toCanvasY(ty));
+    // Função para selecionar um objeto
+    function selecionarObjeto(el) {
+      if (objetoSelecionado) {
+        objetoSelecionado.classList.remove('selecionado');
       }
-      ctx2d.stroke();
+      objetoSelecionado = el;
+      objetoSelecionado.classList.add('selecionado');
     }
 
-    // Módulos e Argumentos
-    const r1 = Math.sqrt(a*a + b*b);
-    let deg1 = Math.atan2(b, a) * (180 / Math.PI); if (deg1 < 0) deg1 += 360;
-    
-    const r2 = Math.sqrt(c*c + d*d);
-    let deg2 = Math.atan2(d, c) * (180 / Math.PI); if (deg2 < 0) deg2 += 360;
+    // Desselecionar ao clicar no fundo do plano
+    plano.addEventListener('click', () => {
+      if (objetoSelecionado) {
+        objetoSelecionado.classList.remove('selecionado');
+        objetoSelecionado = null;
+      }
+    });
 
-    // Vetores no Plano
-    drawVector(a, b, '#f7768e', 'z₁');
-    drawVector(c, d, '#7dcfff', 'z₂');
-    drawVector(resA, resB, '#9ece6a', 'zR');
-
-    // Atualização de Textos
-    textZ1.textContent = formatComplex(a, b);
-    textZ2.textContent = formatComplex(c, d);
-    textZR.textContent = formatComplex(resA, resB);
-
-    infoMod1.textContent = r1.toFixed(2);
-    infoArg1.textContent = deg1.toFixed(1) + '°';
-    infoMod2.textContent = r2.toFixed(2);
-    infoArg2.textContent = deg2.toFixed(1) + '°';
-
-    matrix2dText.textContent = `[ ${resA.toFixed(1)} , ${(-resB).toFixed(1)} ]\n[ ${resB.toFixed(1)} , ${resA.toFixed(1)} ]`;
-  }
-
-  [sliderA, sliderB, sliderC, sliderD].forEach(s => s.addEventListener('input', draw2D));
-  draw2D();
-
-  // --- LÓGICA MODO 3D (THREE.JS & QUATÉRNIOS) ---
-  const container3d = document.getElementById('canvas3d-container');
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0f0f17);
-
-  const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 1000);
-  camera.position.set(0, 3, 9);
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  container3d.appendChild(renderer.domElement);
-
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  dirLight.position.set(5, 10, 7);
-  scene.add(dirLight);
-
-  scene.add(new THREE.GridHelper(12, 12, 0x444466, 0x222233));
-
-  // Criar 3 Objetos 3D na cena para comparação (Rosa, Ciano e Verde)
-  function createCubeMesh(colorHex, posX) {
-    const group = new THREE.Group();
-    const geom = new THREE.BoxGeometry(1.4, 1.4, 1.4);
-    const mat = new THREE.MeshPhongMaterial({ color: colorHex, transparent: true, opacity: 0.75, shininess: 90 });
-    const mesh = new THREE.Mesh(geom, mat);
-    
-    const wire = new THREE.LineSegments(
-      new THREE.WireframeGeometry(geom),
-      new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 1 })
-    );
-    mesh.add(wire);
-    mesh.add(new THREE.AxesHelper(1.2));
-    
-    group.add(mesh);
-    group.position.set(posX, 0, 0);
-    scene.add(group);
-    return group;
-  }
-
-  const cube1 = createCubeMesh(0xf7768e, -2.6); // Esquerda: q1
-  const cube2 = createCubeMesh(0x7dcfff, 0.0);  // Centro: q2
-  const cubeR = createCubeMesh(0x9ece6a, 2.6);  // Direita: qR (Composição)
-
-  let mode3D = 'quat';
-
-  function setMode3D(mode) {
-    mode3D = mode;
-    document.getElementById('btnModeEuler').classList.toggle('active', mode === 'euler');
-    document.getElementById('btnModeQuat').classList.toggle('active', mode === 'quat');
-    document.getElementById('panelEuler').style.display = mode === 'euler' ? 'block' : 'none';
-    document.getElementById('panelQuat').style.display = mode === 'quat' ? 'block' : 'none';
-    update3D();
-  }
-
-  // Elementos do DOM 3D
-  const quatW1 = document.getElementById('quatW1'); const quatX1 = document.getElementById('quatX1');
-  const quatY1 = document.getElementById('quatY1'); const quatZ1 = document.getElementById('quatZ1');
-  const quatW2 = document.getElementById('quatW2'); const quatX2 = document.getElementById('quatX2');
-  const quatY2 = document.getElementById('quatY2'); const quatZ2 = document.getElementById('quatZ2');
-
-  const rotX1 = document.getElementById('rotX1'); const rotY1 = document.getElementById('rotY1'); const rotZ1 = document.getElementById('rotZ1');
-  const rotX2 = document.getElementById('rotX2'); const rotY2 = document.getElementById('rotY2'); const rotZ2 = document.getElementById('rotZ2');
-  const scale = document.getElementById('scale');
-
-  let activeQuatOp = 'mult';
-
-  // Multiplicação da Álgebra de Quatérnios (q1 · q2)
-  function quatMultiply(q1, q2) {
-    return {
-      w: q1.w*q2.w - q1.x*q2.x - q1.y*q2.y - q1.z*q2.z,
-      x: q1.w*q2.x + q1.x*q2.w + q1.y*q2.z - q1.z*q2.y,
-      y: q1.w*q2.y - q1.x*q2.z + q1.y*q2.w + q1.z*q2.x,
-      z: q1.w*q2.z + q1.x*q2.y - q1.y*q2.x + q1.z*q2.w
-    };
-  }
-
-  // Ações Individuais em Quatérnios (q1 ou q2)
-  function execQuatAction(target, action) {
-    let wEl = target === 1 ? quatW1 : quatW2;
-    let xEl = target === 1 ? quatX1 : quatX2;
-    let yEl = target === 1 ? quatY1 : quatY2;
-    let zEl = target === 1 ? quatZ1 : quatZ2;
-
-    let w = parseFloat(wEl.value); let x = parseFloat(xEl.value);
-    let y = parseFloat(yEl.value); let z = parseFloat(zEl.value);
-
-    if (action === 'conj') {
-      x = -x; y = -y; z = -z;
-    } else if (action === 'norm') {
-      let n = Math.sqrt(w*w + x*x + y*y + z*z);
-      if (n > 0) { w /= n; x /= n; y /= n; z /= n; }
-    } else if (action === 'inv') {
-      let n2 = w*w + x*x + y*y + z*z;
-      if (n2 > 0) { w /= n2; x = -x/n2; y = -y/n2; z = -z/n2; }
-    } else if (action === 'reset') {
-      w = target === 1 ? 1.0 : 0.71;
-      x = target === 1 ? 0.0 : 0.71;
-      y = target === 1 ? 0.5 : 0.0;
-      z = 0.0;
-    }
-
-    wEl.value = w.toFixed(2); xEl.value = x.toFixed(2);
-    yEl.value = y.toFixed(2); zEl.value = z.toFixed(2);
-    update3D();
-  }
-
-  function execQuatOp(op) {
-    if (op === 'swap') {
-      let tw = quatW1.value, tx = quatX1.value, ty = quatY1.value, tz = quatZ1.value;
-      quatW1.value = quatW2.value; quatX1.value = quatX2.value; quatY1.value = quatY2.value; quatZ1.value = quatZ2.value;
-      quatW2.value = tw; quatX2.value = tx; quatY2.value = ty; quatZ2.value = tz;
-    } else {
-      activeQuatOp = op;
-    }
-    update3D();
-  }
-
-  function update3D() {
-    const s = parseFloat(scale.value);
-    document.getElementById('valScale').textContent = s.toFixed(1);
-    cube1.scale.set(s, s, s);
-    cube2.scale.set(s, s, s);
-    cubeR.scale.set(s, s, s);
-
-    if (mode3D === 'euler') {
-      const rx1 = (parseFloat(rotX1.value) * Math.PI) / 180;
-      const ry1 = (parseFloat(rotY1.value) * Math.PI) / 180;
-      const rz1 = (parseFloat(rotZ1.value) * Math.PI) / 180;
-
-      const rx2 = (parseFloat(rotX2.value) * Math.PI) / 180;
-      const ry2 = (parseFloat(rotY2.value) * Math.PI) / 180;
-      const rz2 = (parseFloat(rotZ2.value) * Math.PI) / 180;
-
-      document.getElementById('valX1E').textContent = rotX1.value;
-      document.getElementById('valY1E').textContent = rotY1.value;
-      document.getElementById('valZ1E').textContent = rotZ1.value;
-      document.getElementById('valX2E').textContent = rotX2.value;
-      document.getElementById('valY2E').textContent = rotY2.value;
-      document.getElementById('valZ2E').textContent = rotZ2.value;
-
-      cube1.rotation.set(rx1, ry1, rz1);
-      cube2.rotation.set(rx2, ry2, rz2);
-      cubeR.rotation.set(rx1 + rx2, ry1 + ry2, rz1 + rz2);
-
-    } else {
-      let q1 = { w: parseFloat(quatW1.value), x: parseFloat(quatX1.value), y: parseFloat(quatY1.value), z: parseFloat(quatZ1.value) };
-      let q2 = { w: parseFloat(quatW2.value), x: parseFloat(quatX2.value), y: parseFloat(quatY2.value), z: parseFloat(quatZ2.value) };
-
-      document.getElementById('valW1').textContent = q1.w.toFixed(2);
-      document.getElementById('valX1').textContent = q1.x.toFixed(2);
-      document.getElementById('valY1').textContent = q1.y.toFixed(2);
-      document.getElementById('valZ1').textContent = q1.z.toFixed(2);
-
-      document.getElementById('valW2').textContent = q2.w.toFixed(2);
-      document.getElementById('valX2').textContent = q2.x.toFixed(2);
-      document.getElementById('valY2').textContent = q2.y.toFixed(2);
-      document.getElementById('valZ2').textContent = q2.z.toFixed(2);
-
-      // Normalização para Rotação Válida em Three.js
-      let n1 = Math.sqrt(q1.w**2 + q1.x**2 + q1.y**2 + q1.z**2) || 1;
-      let n2 = Math.sqrt(q2.w**2 + q2.x**2 + q2.y**2 + q2.z**2) || 1;
-
-      const tq1 = new THREE.Quaternion(q1.x/n1, q1.y/n1, q1.z/n1, q1.w/n1);
-      const tq2 = new THREE.Quaternion(q2.x/n2, q2.y/n2, q2.z/n2, q2.w/n2);
-
-      cube1.setRotationFromQuaternion(tq1);
-      cube2.setRotationFromQuaternion(tq2);
-
-      // Operação de Composição qR
-      let qR;
-      if (activeQuatOp === 'mult') {
-        qR = quatMultiply(q1, q2);
-      } else if (activeQuatOp === 'add') {
-        qR = { w: q1.w + q2.w, x: q1.x + q2.x, y: q1.y + q2.y, z: q1.z + q2.z };
+    // Função para remover o objeto selecionado
+    function removerSelecionado() {
+      if (objetoSelecionado) {
+        plano.removeChild(objetoSelecionado);
+        objetoSelecionado = null;
       } else {
-        qR = { w: q1.w - q2.w, x: q1.x - q2.x, y: q1.y - q2.y, z: q1.z - q2.z };
+        alert('Selecione um objeto no plano para remover!');
       }
-
-      let nR = Math.sqrt(qR.w**2 + qR.x**2 + qR.y**2 + qR.z**2) || 1;
-      const tqR = new THREE.Quaternion(qR.x/nR, qR.y/nR, qR.z/nR, qR.w/nR);
-      cubeR.setRotationFromQuaternion(tqR);
     }
 
-    cubeR.children[0].updateMatrix();
-    const m = cubeR.children[0].matrix.elements;
-    
-    document.getElementById('matrix3dDisplay').textContent = 
-      `[ ${m[0].toFixed(2)}  ${m[4].toFixed(2)}  ${m[8].toFixed(2)} ]\n` +
-      `[ ${m[1].toFixed(2)}  ${m[5].toFixed(2)}  ${m[9].toFixed(2)} ]\n` +
-      `[ ${m[2].toFixed(2)}  ${m[6].toFixed(2)}  ${m[10].toFixed(2)} ]`;
-  }
+    // Limpar todo o plano
+    function limparPlano() {
+      plano.innerHTML = '';
+      objetoSelecionado = null;
+    }
 
-  function onWindowResize3D() {
-    const width = container3d.clientWidth || window.innerWidth;
-    const height = container3d.clientHeight || (window.innerHeight - 70);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-    renderer.setSize(width, height);
-  }
+    // Lógica para arrastar os elementos
+    function tornarArrastavel(el) {
+      let posX = 0, posY = 0, mouseX = 0, mouseY = 0;
 
-  [quatW1, quatX1, quatY1, quatZ1, quatW2, quatX2, quatY2, quatZ2, rotX1, rotY1, rotZ1, rotX2, rotY2, rotZ2, scale].forEach(elem => elem.addEventListener('input', update3D));
-  window.addEventListener('resize', onWindowResize3D);
+      el.onmousedown = function(e) {
+        e.preventDefault();
+        mouseX = e.clientX;
+        mouseY = e.clientY;
 
-  update3D();
+        document.onmousemove = function(e) {
+          e.preventDefault();
+          posX = mouseX - e.clientX;
+          posY = mouseY - e.clientY;
+          mouseX = e.clientX;
+          mouseY = e.clientY;
 
-  function animate3D() {
-    requestAnimationFrame(animate3D);
-    controls.update();
-    renderer.render(scene, camera);
-  }
-  animate3D();
-</script>
+          el.style.top = (el.offsetTop - posY) + "px";
+          el.style.left = (el.offsetLeft - posX) + "px";
+        };
+
+        document.onmouseup = function() {
+          document.onmousemove = null;
+          document.onmouseup = null;
+        };
+      };
+    }
+  </script>
 </body>
 </html>
