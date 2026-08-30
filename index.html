@@ -103,7 +103,7 @@
       </div>
 
       <div class="card">
-        <h2>Abordagem Matricial</h2>
+        <h2>Abordagem Matricial (z)</h2>
         <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px;">Isomorfismo ℂ ≅ M₂ₓ₂(ℝ):</p>
         <div class="matrix-box" id="single-matrix">[  2.0 , -3.0 ]
 [  3.0 ,  2.0 ]</div>
@@ -167,6 +167,14 @@
         <div class="formula-badge" id="op-expl-1">Regra do Paralelogramo (Soma Vetorial)</div>
         <div class="formula-badge" id="op-expl-2">|z<sub>R</sub>| = |z₁ + z₂|</div>
       </div>
+
+      <div class="card">
+        <h2>Abordagem Matricial (z<sub>R</sub>)</h2>
+        <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px;">Matriz associada ao resultado:</p>
+        <div class="matrix-box" id="ops-matrix">[  3.0 , -3.5 ]
+[  3.5 ,  3.0 ]</div>
+        <div class="formula-badge" style="margin-top:8px;"><b>Determinante = |z<sub>R</sub>|²:</b> <span id="ops-det">21.25</span></div>
+      </div>
     </div>
 
     <!-- SIDEBAR TAB 3 -->
@@ -200,6 +208,14 @@
         <h2>Fórmula de De Moivre</h2>
         <div class="formula-badge" id="pow-formula-1">zⁿ = rⁿ · e^(i · nθ)</div>
         <div class="formula-badge" id="pow-formula-2">Mostrando sequência z¹, z², z³, z⁴...</div>
+      </div>
+
+      <div class="card">
+        <h2>Abordagem Matricial (<span id="pow-mat-title">z⁴</span>)</h2>
+        <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px;">Matriz associada ao elemento destacado:</p>
+        <div class="matrix-box" id="pow-matrix">[  0.0 ,  0.0 ]
+[  0.0 ,  0.0 ]</div>
+        <div class="formula-badge" style="margin-top:8px;"><b>Determinante = |z|²:</b> <span id="pow-det">0.00</span></div>
       </div>
     </div>
   </div>
@@ -343,6 +359,13 @@
       if (degR < 0) degR += 360;
       document.getElementById('op-res-arg').innerText = `${degR.toFixed(1)}° (${radR.toFixed(2)} rad)`;
 
+      // Atualiza a Matriz do Resultado (zR)
+      const strRA = ra.toFixed(1).padStart(5);
+      const strNRB = (-rb).toFixed(1).padStart(5);
+      const strRB = rb.toFixed(1).padStart(5);
+      document.getElementById('ops-matrix').innerText = `[ ${strRA} , ${strNRB} ]\n[ ${strRB} , ${strRA} ]`;
+      document.getElementById('ops-det').innerText = (ra * ra + rb * rb).toFixed(2);
+
       draw();
     }
 
@@ -360,13 +383,38 @@
       if (degP < 0) degP += 360;
       document.getElementById('pow-arg').innerText = `${degP.toFixed(1)}° (${radP.toFixed(2)} rad)`;
 
+      const mod = Math.hypot(ap, bp);
+      let targetA = 0, targetB = 0;
+
       if (powerMode === 'pow') {
         document.getElementById('pow-formula-1').innerText = `Fórmula de De Moivre: zⁿ = rⁿ [cos(nθ) + i sin(nθ)]`;
         document.getElementById('pow-formula-2').innerText = `Exibindo a sequência de potências de 1 a ${n}`;
+        document.getElementById('pow-mat-title').innerText = `z${getSuperscript(n)}`;
+
+        // Calcula a matriz para a potência final zⁿ
+        const modN = Math.pow(mod, n);
+        const thetaN = radP * n;
+        targetA = modN * Math.cos(thetaN);
+        targetB = modN * Math.sin(thetaN);
+
       } else {
         document.getElementById('pow-formula-1').innerText = `Raízes n-ésimas: w_k = ⁿ√r e^(i(θ + 2kπ)/n)`;
         document.getElementById('pow-formula-2').innerText = `Exibindo as ${n} raízes dispostas no polígono regular`;
+        document.getElementById('pow-mat-title').innerText = `w₀`;
+
+        // Calcula a matriz para a primeira raiz w₀
+        const rRoot = Math.pow(mod, 1 / n);
+        const theta0 = radP / n;
+        targetA = rRoot * Math.cos(theta0);
+        targetB = rRoot * Math.sin(theta0);
       }
+
+      // Atualiza a Matriz da aba Potências/Raízes
+      const strTA = targetA.toFixed(1).padStart(5);
+      const strNTB = (-targetB).toFixed(1).padStart(5);
+      const strTB = targetB.toFixed(1).padStart(5);
+      document.getElementById('pow-matrix').innerText = `[ ${strTA} , ${strNTB} ]\n[ ${strTB} , ${strTA} ]`;
+      document.getElementById('pow-det').innerText = (targetA * targetA + targetB * targetB).toFixed(2);
 
       draw();
     }
