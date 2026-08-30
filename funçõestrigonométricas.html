@@ -1,1 +1,545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratório Interativo de Funções Trigonométricas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #080c14;
+      color: #f1f5f9;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      height: 60px;
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+    header h1 { font-size: 1.05rem; font-weight: 700; color: #38bdf8; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .tabs { display: flex; gap: 6px; background: #080c14; padding: 4px; border-radius: 8px; border: 1px solid #1e293b; }
+    .tab-btn {
+      padding: 6px 14px; border: none; background: transparent; color: #94a3b8;
+      font-size: 0.85rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+    }
+    .tab-btn.active { background: #3b82f6; color: white; }
+    .btn-action {
+      border: none; padding: 6px 12px; font-size: 0.85rem; font-weight: 600;
+      border-radius: 6px; cursor: pointer; transition: background 0.2s; color: white;
+    }
+    .btn-anim { background: #8b5cf6; }
+    .btn-anim.active { background: #dc2626; }
+    .btn-export { background: #10b981; }
+    .btn-export:hover { background: #059669; }
+    
+    .main-container { flex: 1; display: flex; overflow: hidden; }
+    .canvas-area { flex: 1; position: relative; background: #030712; }
+    canvas { display: block; width: 100%; height: 100%; }
+    
+    .sidebar {
+      width: 380px; background: #0f172a; border-left: 1px solid #1e293b;
+      padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
+    }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px; }
+    .card h2 { font-size: 0.95rem; font-weight: 600; color: #f8fafc; margin-bottom: 12px; }
+    
+    .control-group { margin-bottom: 12px; }
+    .control-label { display: flex; justify-content: space-between; font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px; }
+    .control-label span { color: #f8fafc; font-weight: 600; }
+    input[type="range"] { width: 100%; accent-color: #38bdf8; background: #0f172a; height: 5px; border-radius: 4px; cursor: pointer; }
+    
+    .matrix-box {
+      background: #080c14; border: 1px solid #334155; border-radius: 6px;
+      padding: 10px; font-family: monospace; color: #4ade80; font-size: 0.9rem; text-align: center; white-space: pre;
+    }
+    .formula-badge {
+      background: #080c14; border: 1px solid #334155; padding: 8px 12px;
+      border-radius: 6px; font-size: 0.85rem; color: #cbd5e1; margin-top: 6px;
+    }
+    
+    .selector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+    .grid-btn {
+      padding: 8px; background: #080c14; border: 1px solid #334155; color: #94a3b8;
+      border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-align: center;
+    }
+    .grid-btn.active { background: #2563eb; color: white; border-color: #3b82f6; }
+    
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.8rem; color: #94a3b8; margin-top: 6px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .hint-drag { font-size: 0.75rem; color: #f59e0b; margin-top: 4px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Laboratório Interativo de Funções Trigonométricas & Rotação Matricial</h1>
+    <div class="header-actions">
+      <button class="btn-action btn-anim" id="btn-toggle-anim" onclick="toggleAnimation()">▶ Animar Ângulo</button>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="setTab('circle')">1. Círculo Unitário</button>
+        <button class="tab-btn" onclick="setTab('wave')">2. Transformação de Ondas</button>
+        <button class="tab-btn" onclick="setTab('matrix')">3. Matriz R(θ)</button>
+      </div>
+      <button class="btn-action btn-export" onclick="exportCanvas()">📷 Exportar PNG</button>
+    </div>
+  </header>
 
+  <div class="main-container">
+    <div class="canvas-area" id="canvas-container">
+      <canvas id="trigCanvas"></canvas>
+    </div>
+
+    <!-- TAB 1: CÍRCULO UNITÁRIO -->
+    <div class="sidebar" id="sidebar-circle">
+      <div class="card">
+        <h2>Ângulo Central (θ)</h2>
+        <div class="hint-drag">💡 Dica: Clique e arraste o ponto sobre a circunferência.</div>
+        <br>
+        <div class="control-group">
+          <div class="control-label">Ângulo (°): <span id="lbl-deg">45°</span></div>
+          <input type="range" id="inp-deg" min="0" max="360" step="1" value="45" oninput="updateCircle()">
+        </div>
+        <div class="formula-badge"><b>Radianos:</b> <span id="circle-rad">0.79 rad (π/4)</span></div>
+        <div class="formula-badge"><b>Coordenadas:</b> <span id="circle-coords">(0.71, 0.71)</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Valores Trigonométricos</h2>
+        <div class="legend" style="margin-bottom:10px;">
+          <div class="legend-item"><span class="legend-dot" style="background:#f43f5e;"></span> Seno</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#38bdf8;"></span> Cosseno</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#facc15;"></span> Tangente</div>
+        </div>
+        <div class="formula-badge"><b>Seno (sin θ):</b> <span id="val-sin">0.707</span></div>
+        <div class="formula-badge"><b>Cosseno (cos θ):</b> <span id="val-cos">0.707</span></div>
+        <div class="formula-badge"><b>Tangente (tan θ):</b> <span id="val-tan">1.000</span></div>
+        <div class="formula-badge"><b>Secante (sec θ):</b> <span id="val-sec">1.414</span></div>
+        <div class="formula-badge"><b>Cosecante (csc θ):</b> <span id="val-csc">1.414</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Identidade Fundamental</h2>
+        <div class="formula-badge"><b>sin²(θ) + cos²(θ) = 1</b></div>
+        <div class="formula-badge"><span id="circle-identity">0.500 + 0.500 = 1.000</span></div>
+      </div>
+    </div>
+
+    <!-- TAB 2: TRANSFORMÇÃO DE ONDAS -->
+    <div class="sidebar" id="sidebar-wave" style="display:none;">
+      <div class="card">
+        <h2>Função Base</h2>
+        <div class="selector-grid">
+          <button class="grid-btn active" id="fn-sin" onclick="setFnType('sin')">sin(x)</button>
+          <button class="grid-btn" id="fn-cos" onclick="setFnType('cos')">cos(x)</button>
+          <button class="grid-btn" id="fn-tan" onclick="setFnType('tan')">tan(x)</button>
+        </div>
+        <div class="formula-badge"><b>Equação Generalizada:</b></div>
+        <div class="formula-badge" style="color:#38bdf8;"><b>f(x) = A · fn(B(x - C)) + D</b></div>
+      </div>
+
+      <div class="card">
+        <h2>Parâmetros de Transformação</h2>
+        <div class="control-group">
+          <div class="control-label">Amplitude (A): <span id="lbl-A">1.0</span></div>
+          <input type="range" id="inp-A" min="-3" max="3" step="0.1" value="1.0" oninput="updateWave()">
+        </div>
+        <div class="control-group">
+          <div class="control-label">Frequência (B): <span id="lbl-B">1.0</span></div>
+          <input type="range" id="inp-B" min="0.2" max="4" step="0.1" value="1.0" oninput="updateWave()">
+        </div>
+        <div class="control-group">
+          <div class="control-label">Fase (C): <span id="lbl-C">0.0</span> rad</div>
+          <input type="range" id="inp-C" min="-3.14" max="3.14" step="0.1" value="0.0" oninput="updateWave()">
+        </div>
+        <div class="control-group">
+          <div class="control-label">Desloc. Vertical (D): <span id="lbl-D">0.0</span></div>
+          <input type="range" id="inp-D" min="-3" max="3" step="0.1" value="0.0" oninput="updateWave()">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Propriedades Calculadas</h2>
+        <div class="formula-badge"><b>Período (T = 2π/|B|):</b> <span id="wave-period">6.28 rad (2.00π)</span></div>
+        <div class="formula-badge"><b>Imagem Im(f):</b> <span id="wave-img">[-1.00, 1.00]</span></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: MATRIZ DE ROTAÇÃO -->
+    <div class="sidebar" id="sidebar-matrix" style="display:none;">
+      <div class="card">
+        <h2>Operador de Rotação R(θ)</h2>
+        <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px;">Matriz de transformação no plano ℝ²:</p>
+        <div class="matrix-box" id="rot-matrix">[  0.71 , -0.71 ]
+[  0.71 ,  0.71 ]</div>
+        <div class="formula-badge" style="margin-top:8px;"><b>Determinante det(R):</b> 1.00 (Isometria)</div>
+        <div class="formula-badge"><b>Traço tr(R):</b> <span id="rot-trace">1.41</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Vetor Base v = (x, y)</h2>
+        <div class="hint-drag">💡 Dica: Arraste o vetor v (azul) para testar a rotação.</div>
+        <br>
+        <div class="control-group">
+          <div class="control-label">Componente x: <span id="lbl-vx">2.0</span></div>
+          <input type="range" id="inp-vx" min="-4" max="4" step="0.1" value="2.0" oninput="updateMatrix()">
+        </div>
+        <div class="control-group">
+          <div class="control-label">Componente y: <span id="lbl-vy">1.0</span></div>
+          <input type="range" id="inp-vy" min="-4" max="4" step="0.1" value="1.0" oninput="updateMatrix()">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Vetor Rotacionado v' = R(θ)·v</h2>
+        <div class="legend" style="margin-bottom:8px;">
+          <div class="legend-item"><span class="legend-dot" style="background:#38bdf8;"></span> Vetor Original v</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#4ade80;"></span> Rotacionado v'</div>
+        </div>
+        <div class="formula-badge"><b>Coordenadas de v':</b> <span id="rot-res">(0.71, 2.12)</span></div>
+        <div class="formula-badge"><b>Preservação da Norma:</b> <span id="rot-norm">|v| = |v'| = 2.24</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentTab = 'circle';
+    let fnType = 'sin';
+    let isAnimating = false;
+    let animReq = null;
+    let isDragging = false;
+
+    const canvas = document.getElementById('trigCanvas');
+    const ctx = canvas.getContext('2d');
+    const scale = 110; // Escala do círculo trigonométrico
+
+    function resizeCanvas() {
+      const container = document.getElementById('canvas-container');
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      draw();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function exportCanvas() {
+      const link = document.createElement('a');
+      link.download = 'laboratorio_funcoes_trigonometricas.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function toggleAnimation() {
+      isAnimating = !isAnimating;
+      const btn = document.getElementById('btn-toggle-anim');
+      btn.classList.toggle('active', isAnimating);
+      btn.innerText = isAnimating ? '⏸ Pausar' : '▶ Animar Ângulo';
+
+      if (isAnimating) animateLoop();
+      else if (animReq) cancelAnimationFrame(animReq);
+    }
+
+    function animateLoop() {
+      if (!isAnimating) return;
+
+      let deg = parseFloat(document.getElementById('inp-deg').value);
+      deg = (deg + 1) % 360;
+      document.getElementById('inp-deg').value = deg;
+
+      if (currentTab === 'circle') updateCircle();
+      else if (currentTab === 'wave') updateWave();
+      else if (currentTab === 'matrix') updateMatrix();
+
+      animReq = requestAnimationFrame(animateLoop);
+    }
+
+    function setTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`.tab-btn[onclick="setTab('${tab}')"]`).classList.add('active');
+
+      document.getElementById('sidebar-circle').style.display = tab === 'circle' ? 'flex' : 'none';
+      document.getElementById('sidebar-wave').style.display = tab === 'wave' ? 'flex' : 'none';
+      document.getElementById('sidebar-matrix').style.display = tab === 'matrix' ? 'flex' : 'none';
+
+      draw();
+    }
+
+    function setFnType(type) {
+      fnType = type;
+      document.querySelectorAll('.grid-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`fn-${type}`).classList.add('active');
+      updateWave();
+    }
+
+    function updateCircle() {
+      const deg = parseFloat(document.getElementById('inp-deg').value);
+      const rad = deg * (Math.PI / 180);
+
+      const sinVal = Math.sin(rad);
+      const cosVal = Math.cos(rad);
+      const tanVal = Math.abs(cosVal) > 0.001 ? Math.tan(rad) : Infinity;
+
+      document.getElementById('lbl-deg').innerText = `${deg.toFixed(0)}°`;
+      document.getElementById('circle-rad').innerText = `${rad.toFixed(2)} rad (${(deg/180).toFixed(2)}π)`;
+      document.getElementById('circle-coords').innerText = `(${cosVal.toFixed(2)}, ${sinVal.toFixed(2)})`;
+
+      document.getElementById('val-sin').innerText = sinVal.toFixed(3);
+      document.getElementById('val-cos').innerText = cosVal.toFixed(3);
+      document.getElementById('val-tan').innerText = isFinite(tanVal) ? tanVal.toFixed(3) : 'Indefinido';
+      document.getElementById('val-sec').innerText = Math.abs(cosVal) > 0.001 ? (1/cosVal).toFixed(3) : 'Indefinido';
+      document.getElementById('val-csc').innerText = Math.abs(sinVal) > 0.001 ? (1/sinVal).toFixed(3) : 'Indefinido';
+
+      const sinSq = sinVal * sinVal;
+      const cosSq = cosVal * cosVal;
+      document.getElementById('circle-identity').innerText = `${sinSq.toFixed(3)} + ${cosSq.toFixed(3)} = ${(sinSq + cosSq).toFixed(3)}`;
+
+      draw();
+    }
+
+    function updateWave() {
+      const A = parseFloat(document.getElementById('inp-A').value);
+      const B = parseFloat(document.getElementById('inp-B').value);
+      const C = parseFloat(document.getElementById('inp-C').value);
+      const D = parseFloat(document.getElementById('inp-D').value);
+
+      document.getElementById('lbl-A').innerText = A.toFixed(1);
+      document.getElementById('lbl-B').innerText = B.toFixed(1);
+      document.getElementById('lbl-C').innerText = C.toFixed(1);
+      document.getElementById('lbl-D').innerText = D.toFixed(1);
+
+      const period = (2 * Math.PI) / Math.abs(B);
+      document.getElementById('wave-period').innerText = `${period.toFixed(2)} rad (${(period/Math.PI).toFixed(2)}π)`;
+
+      if (fnType !== 'tan') {
+        const minY = -Math.abs(A) + D;
+        const maxY = Math.abs(A) + D;
+        document.getElementById('wave-img').innerText = `[${minY.toFixed(2)}, ${maxY.toFixed(2)}]`;
+      } else {
+        document.getElementById('wave-img').innerText = '(-∞, +∞)';
+      }
+
+      draw();
+    }
+
+    function updateMatrix() {
+      const deg = parseFloat(document.getElementById('inp-deg').value);
+      const rad = deg * (Math.PI / 180);
+      const vx = parseFloat(document.getElementById('inp-vx').value);
+      const vy = parseFloat(document.getElementById('inp-vy').value);
+
+      document.getElementById('lbl-vx').innerText = vx.toFixed(1);
+      document.getElementById('lbl-vy').innerText = vy.toFixed(1);
+
+      const c = Math.cos(rad);
+      const s = Math.sin(rad);
+
+      const strC = c.toFixed(2).padStart(6);
+      const strNS = (-s).toFixed(2).padStart(6);
+      const strS = s.toFixed(2).padStart(6);
+
+      document.getElementById('rot-matrix').innerText = `[ ${strC} , ${strNS} ]\n[ ${strS} , ${strC} ]`;
+      document.getElementById('rot-trace').innerText = (2 * c).toFixed(2);
+
+      const rx = c * vx - s * vy;
+      const ry = s * vx + c * vy;
+      document.getElementById('rot-res').innerText = `(${rx.toFixed(2)}, ${ry.toFixed(2)})`;
+
+      const normOrig = Math.hypot(vx, vy);
+      const normRot = Math.hypot(rx, ry);
+      document.getElementById('rot-norm').innerText = `|v| = |v'| = ${normOrig.toFixed(2)}`;
+
+      draw();
+    }
+
+    // INTERATIVIDADE POR ARRASTO
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      return {
+        x: e.clientX - rect.left - cx,
+        y: cy - (e.clientY - rect.top)
+      };
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      handleDrag(e);
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (isDragging) handleDrag(e);
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; });
+
+    function handleDrag(e) {
+      const { x, y } = getCanvasCoords(e);
+      if (currentTab === 'circle' || currentTab === 'matrix') {
+        let rad = Math.atan2(y, x);
+        let deg = Math.round(rad * (180 / Math.PI));
+        if (deg < 0) deg += 360;
+        document.getElementById('inp-deg').value = deg;
+
+        if (currentTab === 'circle') updateCircle();
+        else updateMatrix();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      // Grade
+      const gridStep = 50;
+      ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+      for (let x = cx % gridStep; x < canvas.width; x += gridStep) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = cy % gridStep; y < canvas.height; y += gridStep) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+
+      // Eixos Principais
+      ctx.strokeStyle = '#475569'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height); ctx.stroke();
+
+      ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
+      ctx.fillText('X', canvas.width - 20, cy - 8);
+      ctx.fillText('Y', cx + 8, 18);
+
+      if (currentTab === 'circle') {
+        const deg = parseFloat(document.getElementById('inp-deg').value);
+        const rad = deg * (Math.PI / 180);
+
+        // Circulo Unitário
+        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(cx, cy, scale, 0, Math.PI * 2); ctx.stroke();
+
+        const px = cx + scale * Math.cos(rad);
+        const py = cy - scale * Math.sin(rad);
+
+        // Cosseno (linha azul x)
+        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, cy); ctx.stroke();
+
+        // Seno (linha vermelha y)
+        ctx.strokeStyle = '#f43f5e'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(px, cy); ctx.lineTo(px, py); ctx.stroke();
+
+        // Raio
+        ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+
+        // Tangente
+        if (Math.abs(Math.cos(rad)) > 0.001) {
+          const tanVal = Math.tan(rad);
+          const tanY = cy - scale * tanVal;
+          ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.moveTo(cx + scale, cy); ctx.lineTo(cx + scale, tanY); ctx.stroke();
+          
+          // Linha até eixo tangente
+          ctx.strokeStyle = '#475569'; ctx.setLineDash([4, 4]);
+          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + scale, tanY); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Ponto Interativo
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
+
+      } else if (currentTab === 'wave') {
+        const A = parseFloat(document.getElementById('inp-A').value);
+        const B = parseFloat(document.getElementById('inp-B').value);
+        const C = parseFloat(document.getElementById('inp-C').value);
+        const D = parseFloat(document.getElementById('inp-D').value);
+
+        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+
+        let first = true;
+        for (let pixelX = 0; pixelX < canvas.width; pixelX += 2) {
+          const x = (pixelX - cx) / 50; // 50px = 1 unit no gráfico de onda
+          let y = 0;
+
+          if (fnType === 'sin') y = A * Math.sin(B * (x - C)) + D;
+          else if (fnType === 'cos') y = A * Math.cos(B * (x - C)) + D;
+          else if (fnType === 'tan') y = A * Math.tan(B * (x - C)) + D;
+
+          const pixelY = cy - y * 50;
+
+          if (Math.abs(pixelY) < canvas.height * 2) {
+            if (first) { ctx.moveTo(pixelX, pixelY); first = false; }
+            else { ctx.lineTo(pixelX, pixelY); }
+          } else {
+            first = true;
+          }
+        }
+        ctx.stroke();
+
+      } else if (currentTab === 'matrix') {
+        const deg = parseFloat(document.getElementById('inp-deg').value);
+        const rad = deg * (Math.PI / 180);
+        const vx = parseFloat(document.getElementById('inp-vx').value);
+        const vy = parseFloat(document.getElementById('inp-vy').value);
+
+        const c = Math.cos(rad);
+        const s = Math.sin(rad);
+        const rx = c * vx - s * vy;
+        const ry = s * vx + c * vy;
+
+        // Vetor Original (azul)
+        drawVector(cx, cy, vx * 40, vy * 40, '#38bdf8', 'v');
+
+        // Vetor Rotacionado (verde)
+        drawVector(cx, cy, rx * 40, ry * 40, '#4ade80', "v'");
+
+        // Arco de Rotação
+        ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        const startAngle = Math.atan2(vy, vx);
+        const endAngle = startAngle + rad;
+        ctx.arc(cx, cy, 35, -startAngle, -endAngle, true);
+        ctx.stroke();
+      }
+    }
+
+    function drawVector(cx, cy, vx, vy, color, label) {
+      const px = cx + vx;
+      const py = cy - vy;
+
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2.5;
+
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+
+      const angle = Math.atan2(py - cy, px - cx);
+      const headLen = 8;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px - headLen * Math.cos(angle - Math.PI / 6), py - headLen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(px - headLen * Math.cos(angle + Math.PI / 6), py - headLen * Math.sin(angle + Math.PI / 6));
+      ctx.fill();
+
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText(label, px + 8, py - 6);
+    }
+
+    window.onload = () => {
+      resizeCanvas();
+      updateCircle();
+    };
+  </script>
+</body>
+</html>
