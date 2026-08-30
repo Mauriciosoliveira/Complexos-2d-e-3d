@@ -25,12 +25,18 @@
       padding: 0 24px;
     }
     header h1 { font-size: 1.15rem; font-weight: 700; color: #38bdf8; }
+    .header-actions { display: flex; gap: 12px; align-items: center; }
     .tabs { display: flex; gap: 6px; background: #080c14; padding: 4px; border-radius: 8px; border: 1px solid #1e293b; }
     .tab-btn {
       padding: 6px 14px; border: none; background: transparent; color: #94a3b8;
       font-size: 0.85rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s;
     }
     .tab-btn.active { background: #3b82f6; color: white; }
+    .btn-export {
+      background: #10b981; color: white; border: none; padding: 6px 12px;
+      font-size: 0.85rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-export:hover { background: #059669; }
     
     .main-container { flex: 1; display: flex; overflow: hidden; }
     .canvas-area { flex: 1; position: relative; background: #030712; }
@@ -72,10 +78,13 @@
 <body>
   <header>
     <h1>Laboratório Interativo de Números Complexos</h1>
-    <div class="tabs">
-      <button class="tab-btn active" onclick="setTab('single')">1. Número Único (z)</button>
-      <button class="tab-btn" onclick="setTab('ops')">2. Operações (z₁, z₂)</button>
-      <button class="tab-btn" onclick="setTab('powers')">3. Potências & Raízes</button>
+    <div class="header-actions">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="setTab('single')">1. Número Único (z)</button>
+        <button class="tab-btn" onclick="setTab('ops')">2. Operações (z₁, z₂)</button>
+        <button class="tab-btn" onclick="setTab('powers')">3. Potências & Raízes</button>
+      </div>
+      <button class="btn-export" onclick="exportCanvas()">📷 Exportar PNG</button>
     </div>
   </header>
 
@@ -108,6 +117,7 @@
         <div class="matrix-box" id="single-matrix">[  2.0 , -3.0 ]
 [  3.0 ,  2.0 ]</div>
         <div class="formula-badge" style="margin-top:8px;"><b>Determinante = |z|²:</b> <span id="single-det">13.00</span></div>
+        <div class="formula-badge"><b>Autovalores (λ):</b> <span id="single-eig">2.0 ± 3.0i</span></div>
       </div>
 
       <div class="card">
@@ -174,6 +184,7 @@
         <div class="matrix-box" id="ops-matrix">[  3.0 , -3.5 ]
 [  3.5 ,  3.0 ]</div>
         <div class="formula-badge" style="margin-top:8px;"><b>Determinante = |z<sub>R</sub>|²:</b> <span id="ops-det">21.25</span></div>
+        <div class="formula-badge"><b>Autovalores (λ):</b> <span id="ops-eig">3.0 ± 3.5i</span></div>
       </div>
     </div>
 
@@ -216,6 +227,7 @@
         <div class="matrix-box" id="pow-matrix">[  0.0 ,  0.0 ]
 [  0.0 ,  0.0 ]</div>
         <div class="formula-badge" style="margin-top:8px;"><b>Determinante = |z|²:</b> <span id="pow-det">0.00</span></div>
+        <div class="formula-badge"><b>Autovalores (λ):</b> <span id="pow-eig">0.0 ± 0.0i</span></div>
       </div>
     </div>
   </div>
@@ -225,7 +237,6 @@
     let currentOp = 'add';
     let powerMode = 'pow';
 
-    // Canvas setup
     const canvas = document.getElementById('complexCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -246,6 +257,13 @@
       draw();
     }
     window.addEventListener('resize', resizeCanvas);
+
+    function exportCanvas() {
+      const link = document.createElement('a');
+      link.download = 'numero_complexo_plano.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
 
     function setTab(tab) {
       currentTab = tab;
@@ -297,6 +315,7 @@
       const strB = b.toFixed(1).padStart(5);
       document.getElementById('single-matrix').innerText = `[ ${strA} , ${strNB} ]\n[ ${strB} , ${strA} ]`;
       document.getElementById('single-det').innerText = (mod * mod).toFixed(2);
+      document.getElementById('single-eig').innerText = `${a.toFixed(1)} ± ${Math.abs(b).toFixed(1)}i`;
 
       document.getElementById('single-mod').innerText = mod.toFixed(2);
       document.getElementById('single-arg').innerText = `${deg.toFixed(1)}° (${rad.toFixed(2)} rad)`;
@@ -328,7 +347,7 @@
       let ra = 0, rb = 0;
       if (currentOp === 'add') {
         ra = a1 + a2; rb = b1 + b2;
-        document.getElementById('op-expl-1').innerText = "Regra do Paralelogramo (Soma de Vetores)";
+        document.getElementById('op-expl-1').innerText = "Regra do Paralelogramo (Soma Vetorial)";
         document.getElementById('op-expl-2').innerText = `z₁ + z₂ = (${a1.toFixed(1)}+${a2.toFixed(1)}) + (${b1.toFixed(1)}+${b2.toFixed(1)})i`;
       } else if (currentOp === 'sub') {
         ra = a1 - a2; rb = b1 - b2;
@@ -338,7 +357,7 @@
         ra = a1 * a2 - b1 * b2;
         rb = a1 * b2 + a2 * b1;
         const r1 = Math.hypot(a1, b1), r2 = Math.hypot(a2, b2);
-        document.getElementById('op-expl-1').innerText = `Multiplicação: Módulos se multiplicam (|z_R| = ${(r1*r2).toFixed(2)})`;
+        document.getElementById('op-expl-1').innerText = `Multiplicação: |z_R| = ${(r1*r2).toFixed(2)}`;
         document.getElementById('op-expl-2').innerText = `Argumentos se somam: θ_R = θ₁ + θ₂`;
       } else if (currentOp === 'div') {
         const denom = a2*a2 + b2*b2;
@@ -347,7 +366,7 @@
           rb = (b1*a2 - a1*b2) / denom;
         }
         const r1 = Math.hypot(a1, b1), r2 = Math.hypot(a2, b2);
-        document.getElementById('op-expl-1').innerText = `Divisão: Módulos se dividem (|z_R| = ${(r2>0 ? r1/r2 : 0).toFixed(2)})`;
+        document.getElementById('op-expl-1').innerText = `Divisão: |z_R| = ${(r2>0 ? r1/r2 : 0).toFixed(2)}`;
         document.getElementById('op-expl-2').innerText = `Argumentos se subtraem: θ_R = θ₁ - θ₂`;
       }
 
@@ -359,12 +378,12 @@
       if (degR < 0) degR += 360;
       document.getElementById('op-res-arg').innerText = `${degR.toFixed(1)}° (${radR.toFixed(2)} rad)`;
 
-      // Atualiza a Matriz do Resultado (zR)
       const strRA = ra.toFixed(1).padStart(5);
       const strNRB = (-rb).toFixed(1).padStart(5);
       const strRB = rb.toFixed(1).padStart(5);
       document.getElementById('ops-matrix').innerText = `[ ${strRA} , ${strNRB} ]\n[ ${strRB} , ${strRA} ]`;
       document.getElementById('ops-det').innerText = (ra * ra + rb * rb).toFixed(2);
+      document.getElementById('ops-eig').innerText = `${ra.toFixed(1)} ± ${Math.abs(rb).toFixed(1)}i`;
 
       draw();
     }
@@ -388,45 +407,50 @@
 
       if (powerMode === 'pow') {
         document.getElementById('pow-formula-1').innerText = `Fórmula de De Moivre: zⁿ = rⁿ [cos(nθ) + i sin(nθ)]`;
-        document.getElementById('pow-formula-2').innerText = `Exibindo a sequência de potências de 1 a ${n}`;
+        document.getElementById('pow-formula-2').innerText = `Exibindo sequência de z¹ a z${getSuperscript(n)}`;
         document.getElementById('pow-mat-title').innerText = `z${getSuperscript(n)}`;
 
-        // Calcula a matriz para a potência final zⁿ
         const modN = Math.pow(mod, n);
         const thetaN = radP * n;
         targetA = modN * Math.cos(thetaN);
         targetB = modN * Math.sin(thetaN);
-
       } else {
         document.getElementById('pow-formula-1').innerText = `Raízes n-ésimas: w_k = ⁿ√r e^(i(θ + 2kπ)/n)`;
-        document.getElementById('pow-formula-2').innerText = `Exibindo as ${n} raízes dispostas no polígono regular`;
+        document.getElementById('pow-formula-2').innerText = `Exibindo as ${n} raízes dispostas no polígono`;
         document.getElementById('pow-mat-title').innerText = `w₀`;
 
-        // Calcula a matriz para a primeira raiz w₀
         const rRoot = Math.pow(mod, 1 / n);
         const theta0 = radP / n;
         targetA = rRoot * Math.cos(theta0);
         targetB = rRoot * Math.sin(theta0);
       }
 
-      // Atualiza a Matriz da aba Potências/Raízes
       const strTA = targetA.toFixed(1).padStart(5);
       const strNTB = (-targetB).toFixed(1).padStart(5);
       const strTB = targetB.toFixed(1).padStart(5);
       document.getElementById('pow-matrix').innerText = `[ ${strTA} , ${strNTB} ]\n[ ${strTB} , ${strTA} ]`;
       document.getElementById('pow-det').innerText = (targetA * targetA + targetB * targetB).toFixed(2);
+      document.getElementById('pow-eig').innerText = `${targetA.toFixed(1)} ± ${Math.abs(targetB).toFixed(1)}i`;
 
       draw();
     }
 
-    // --- DRAWING ENGINE ---
+    function drawAngleArc(cx, cy, radius, startAngle, endAngle, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      // Canvas inverte eixo Y
+      ctx.arc(cx, cy, radius, -startAngle, -endAngle, startAngle < endAngle);
+      ctx.stroke();
+    }
+
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
-      const scale = 50; // 50px per unit
+      const scale = 50;
 
-      // Grid Lines
+      // Grade
       ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
       for (let x = cx % scale; x < canvas.width; x += scale) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
@@ -435,12 +459,11 @@
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
       }
 
-      // Main Axes
+      // Eixos principais
       ctx.strokeStyle = '#475569'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy); ctx.stroke(); // Re
-      ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height); ctx.stroke(); // Im
+      ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height); ctx.stroke();
 
-      // Axis Labels
       ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
       ctx.fillText('Re', canvas.width - 24, cy - 8);
       ctx.fillText('Im', cx + 8, 18);
@@ -449,13 +472,15 @@
         const a = parseFloat(document.getElementById('inp-a').value);
         const b = parseFloat(document.getElementById('inp-b').value);
 
-        // Projections
         ctx.strokeStyle = '#334155'; ctx.setLineDash([4, 4]);
         ctx.beginPath(); ctx.moveTo(cx + a*scale, cy); ctx.lineTo(cx + a*scale, cy - b*scale); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(cx, cy - b*scale); ctx.lineTo(cx + a*scale, cy - b*scale); ctx.stroke();
         ctx.setLineDash([]);
 
-        // Conjugate vector (dashed)
+        let rad = Math.atan2(b, a);
+        if (rad < 0) rad += Math.PI * 2;
+        drawAngleArc(cx, cy, 30, 0, rad, '#f59e0b');
+
         drawVector(cx, cy, a*scale, b*scale, '#38bdf8', 'z');
         drawVector(cx, cy, a*scale, -b*scale, '#c084fc', 'z̄', true);
 
@@ -471,14 +496,12 @@
         let ra = 0, rb = 0;
         if (currentOp === 'add') {
           ra = a1 + a2; rb = b1 + b2;
-          // Parallelogram guide lines
           ctx.strokeStyle = '#475569'; ctx.setLineDash([4, 4]);
           ctx.beginPath(); ctx.moveTo(cx + a1*scale, cy - b1*scale); ctx.lineTo(cx + ra*scale, cy - rb*scale); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(cx + a2*scale, cy - b2*scale); ctx.lineTo(cx + ra*scale, cy - rb*scale); ctx.stroke();
           ctx.setLineDash([]);
         } else if (currentOp === 'sub') {
           ra = a1 - a2; rb = b1 - b2;
-          // Vector subtraction guide
           ctx.strokeStyle = '#475569'; ctx.setLineDash([4, 4]);
           ctx.beginPath(); ctx.moveTo(cx + a2*scale, cy - b2*scale); ctx.lineTo(cx + a1*scale, cy - b1*scale); ctx.stroke();
           ctx.setLineDash([]);
@@ -488,6 +511,10 @@
           const denom = a2*a2 + b2*b2;
           if (denom > 0) { ra = (a1*a2 + b1*b2)/denom; rb = (b1*a2 - a1*b2)/denom; }
         }
+
+        let radR = Math.atan2(rb, ra);
+        if (radR < 0) radR += Math.PI * 2;
+        drawAngleArc(cx, cy, 35, 0, radR, '#f59e0b');
 
         drawVector(cx, cy, ra*scale, rb*scale, '#f43f5e', 'zᵣ');
 
@@ -504,17 +531,9 @@
             const mk = Math.pow(mod, k);
             const tk = theta * k;
             const vectorLabel = k === 1 ? 'z' : `z${getSuperscript(k)}`;
-            
-            drawVector(
-              cx, cy, 
-              mk * Math.cos(tk) * scale, 
-              mk * Math.sin(tk) * scale, 
-              k === n ? '#f43f5e' : '#38bdf8', 
-              vectorLabel
-            );
+            drawVector(cx, cy, mk * Math.cos(tk) * scale, mk * Math.sin(tk) * scale, k === n ? '#f43f5e' : '#38bdf8', vectorLabel);
           }
         } else {
-          // Roots - Circle & Regular Polygon
           const rRoot = Math.pow(mod, 1 / n);
           ctx.strokeStyle = '#334155'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.arc(cx, cy, rRoot * scale, 0, Math.PI * 2); ctx.stroke();
@@ -528,7 +547,6 @@
             drawVector(cx, cy, rRoot * Math.cos(tk) * scale, rRoot * Math.sin(tk) * scale, '#4ade80', `w${getSubscript(k)}`);
           }
 
-          // Polygon connecting roots
           ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1.5; ctx.beginPath();
           rootCoords.forEach((pt, idx) => {
             if (idx === 0) ctx.moveTo(pt.x, pt.y);
@@ -551,7 +569,6 @@
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
       if (isDashed) ctx.setLineDash([]);
 
-      // Arrow head
       const angle = Math.atan2(py - cy, px - cx);
       const headLen = 8;
       ctx.beginPath();
@@ -560,7 +577,6 @@
       ctx.lineTo(px - headLen * Math.cos(angle + Math.PI / 6), py - headLen * Math.sin(angle + Math.PI / 6));
       ctx.fill();
 
-      // Label
       ctx.font = 'bold 13px sans-serif';
       ctx.fillText(label, px + 8, py - 6);
     }
