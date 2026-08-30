@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Laboratório Interativo de Números Complexos</title>
+  <title>Abordagem do Corpo dos Números Complexos via Corpo das Matrizes</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -24,23 +24,26 @@
       justify-content: space-between;
       padding: 0 24px;
     }
-    header h1 { font-size: 1.15rem; font-weight: 700; color: #38bdf8; }
-    .header-actions { display: flex; gap: 12px; align-items: center; }
+    header h1 { font-size: 1.05rem; font-weight: 700; color: #38bdf8; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
     .tabs { display: flex; gap: 6px; background: #080c14; padding: 4px; border-radius: 8px; border: 1px solid #1e293b; }
     .tab-btn {
       padding: 6px 14px; border: none; background: transparent; color: #94a3b8;
       font-size: 0.85rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s;
     }
     .tab-btn.active { background: #3b82f6; color: white; }
-    .btn-export {
-      background: #10b981; color: white; border: none; padding: 6px 12px;
-      font-size: 0.85rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s;
+    .btn-action {
+      border: none; padding: 6px 12px; font-size: 0.85rem; font-weight: 600;
+      border-radius: 6px; cursor: pointer; transition: background 0.2s; color: white;
     }
+    .btn-anim { background: #8b5cf6; }
+    .btn-anim.active { background: #dc2626; }
+    .btn-export { background: #10b981; }
     .btn-export:hover { background: #059669; }
     
     .main-container { flex: 1; display: flex; overflow: hidden; }
     .canvas-area { flex: 1; position: relative; background: #030712; }
-    canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+    canvas { display: block; width: 100%; height: 100%; }
     
     .sidebar {
       width: 380px; background: #0f172a; border-left: 1px solid #1e293b;
@@ -73,18 +76,20 @@
     .legend { display: flex; gap: 12px; font-size: 0.8rem; color: #94a3b8; margin-top: 6px; }
     .legend-item { display: flex; align-items: center; gap: 6px; }
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .hint-drag { font-size: 0.75rem; color: #f59e0b; margin-top: 4px; font-style: italic; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Laboratório Interativo de Números Complexos</h1>
+    <h1>Abordagem do Corpo dos Números Complexos via Corpo das Matrizes M₂ₓ₂(ℝ)</h1>
     <div class="header-actions">
+      <button class="btn-action btn-anim" id="btn-toggle-anim" onclick="toggleAnimation()">▶ Animar Rotação</button>
       <div class="tabs">
-        <button class="tab-btn active" onclick="setTab('single')">1. Número Único (z)</button>
-        <button class="tab-btn" onclick="setTab('ops')">2. Operações (z₁, z₂)</button>
-        <button class="tab-btn" onclick="setTab('powers')">3. Potências & Raízes</button>
+        <button class="tab-btn active" onclick="setTab('single')">1. Número z</button>
+        <button class="tab-btn" onclick="setTab('ops')">2. Operações</button>
+        <button class="tab-btn" onclick="setTab('powers')">3. Potências</button>
       </div>
-      <button class="btn-export" onclick="exportCanvas()">📷 Exportar PNG</button>
+      <button class="btn-action btn-export" onclick="exportCanvas()">📷 Exportar PNG</button>
     </div>
   </header>
 
@@ -93,10 +98,12 @@
       <canvas id="complexCanvas"></canvas>
     </div>
 
-    <!-- SIDEBAR TAB 1 -->
+    <!-- TAB 1 -->
     <div class="sidebar" id="sidebar-single">
       <div class="card">
-        <h2>Representação Geométrica & Algébrica</h2>
+        <h2>Representação Geométrica</h2>
+        <div class="hint-drag">💡 Dica: Clique e arraste a ponta do vetor no gráfico.</div>
+        <br>
         <div class="control-group">
           <div class="control-label">Parte Real (a): <span id="lbl-a">2.0</span></div>
           <input type="range" id="inp-a" min="-5" max="5" step="0.1" value="2.0" oninput="updateSingle()">
@@ -112,8 +119,7 @@
       </div>
 
       <div class="card">
-        <h2>Abordagem Matricial (z)</h2>
-        <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px;">Isomorfismo ℂ ≅ M₂ₓ₂(ℝ):</p>
+        <h2>Isomorfismo ℂ ≅ M₂ₓ₂(ℝ)</h2>
         <div class="matrix-box" id="single-matrix">[  2.0 , -3.0 ]
 [  3.0 ,  2.0 ]</div>
         <div class="formula-badge" style="margin-top:8px;"><b>Determinante = |z|²:</b> <span id="single-det">13.00</span></div>
@@ -121,7 +127,7 @@
       </div>
 
       <div class="card">
-        <h2>Propriedades Relevantes</h2>
+        <h2>Propriedades</h2>
         <div class="formula-badge"><b>Módulo (|z|):</b> <span id="single-mod">3.61</span></div>
         <div class="formula-badge"><b>Argumento (θ):</b> <span id="single-arg">56.3° (0.98 rad)</span></div>
         <div class="formula-badge"><b>Conjugado (z̄):</b> <span id="single-conj">2.0 - 3.0i</span></div>
@@ -129,10 +135,12 @@
       </div>
     </div>
 
-    <!-- SIDEBAR TAB 2 -->
+    <!-- TAB 2 -->
     <div class="sidebar" id="sidebar-ops" style="display:none;">
       <div class="card">
-        <h2>Selecione a Operação</h2>
+        <h2>Operação Vetorial/Matricial</h2>
+        <div class="hint-drag">💡 Dica: Arraste os vetores z₁ ou z₂ na tela.</div>
+        <br>
         <div class="op-selector">
           <button class="op-btn active" id="op-add" onclick="setOp('add')">Soma (+)</button>
           <button class="op-btn" id="op-sub" onclick="setOp('sub')">Subtração (-)</button>
@@ -172,26 +180,25 @@
 
       <div class="card">
         <h2>Resultado & Geometria</h2>
-        <div class="formula-badge"><b>Valor de z<sub>R</sub>:</b> <span id="op-res-val">3.0 + 3.5i</span></div>
+        <div class="formula-badge"><b>Valor z<sub>R</sub>:</b> <span id="op-res-val">3.0 + 3.5i</span></div>
         <div class="formula-badge"><b>Argumento (θ<sub>R</sub>):</b> <span id="op-res-arg">49.4° (0.86 rad)</span></div>
-        <div class="formula-badge" id="op-expl-1">Regra do Paralelogramo (Soma Vetorial)</div>
-        <div class="formula-badge" id="op-expl-2">|z<sub>R</sub>| = |z₁ + z₂|</div>
       </div>
 
       <div class="card">
-        <h2>Abordagem Matricial (z<sub>R</sub>)</h2>
-        <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px;">Matriz associada ao resultado:</p>
+        <h2>Matriz Associada a z<sub>R</sub></h2>
         <div class="matrix-box" id="ops-matrix">[  3.0 , -3.5 ]
 [  3.5 ,  3.0 ]</div>
-        <div class="formula-badge" style="margin-top:8px;"><b>Determinante = |z<sub>R</sub>|²:</b> <span id="ops-det">21.25</span></div>
+        <div class="formula-badge" style="margin-top:8px;"><b>Determinante:</b> <span id="ops-det">21.25</span></div>
         <div class="formula-badge"><b>Autovalores (λ):</b> <span id="ops-eig">3.0 ± 3.5i</span></div>
       </div>
     </div>
 
-    <!-- SIDEBAR TAB 3 -->
+    <!-- TAB 3 -->
     <div class="sidebar" id="sidebar-powers" style="display:none;">
       <div class="card">
         <h2>Base z</h2>
+        <div class="hint-drag">💡 Dica: Arraste o vetor base z no plano.</div>
+        <br>
         <div class="control-group">
           <div class="control-label">Re(z): <span id="lbl-ap">1.2</span></div>
           <input type="range" id="inp-ap" min="-3" max="3" step="0.1" value="1.2" oninput="updatePowers()">
@@ -200,11 +207,10 @@
           <div class="control-label">Im(z): <span id="lbl-bp">0.8</span></div>
           <input type="range" id="inp-bp" min="-3" max="3" step="0.1" value="0.8" oninput="updatePowers()">
         </div>
-        <div class="formula-badge"><b>Argumento Base (θ):</b> <span id="pow-arg">33.7° (0.59 rad)</span></div>
       </div>
 
       <div class="card">
-        <h2>Expoente / Índice (n)</h2>
+        <h2>Expoente (n)</h2>
         <div class="control-group">
           <div class="control-label">Grau (n): <span id="lbl-n">4</span></div>
           <input type="range" id="inp-n" min="2" max="8" step="1" value="4" oninput="updatePowers()">
@@ -216,17 +222,10 @@
       </div>
 
       <div class="card">
-        <h2>Fórmula de De Moivre</h2>
-        <div class="formula-badge" id="pow-formula-1">zⁿ = rⁿ · e^(i · nθ)</div>
-        <div class="formula-badge" id="pow-formula-2">Mostrando sequência z¹, z², z³, z⁴...</div>
-      </div>
-
-      <div class="card">
-        <h2>Abordagem Matricial (<span id="pow-mat-title">z⁴</span>)</h2>
-        <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px;">Matriz associada ao elemento destacado:</p>
+        <h2>Matriz Destacada</h2>
         <div class="matrix-box" id="pow-matrix">[  0.0 ,  0.0 ]
 [  0.0 ,  0.0 ]</div>
-        <div class="formula-badge" style="margin-top:8px;"><b>Determinante = |z|²:</b> <span id="pow-det">0.00</span></div>
+        <div class="formula-badge" style="margin-top:8px;"><b>Determinante:</b> <span id="pow-det">0.00</span></div>
         <div class="formula-badge"><b>Autovalores (λ):</b> <span id="pow-eig">0.0 ± 0.0i</span></div>
       </div>
     </div>
@@ -236,9 +235,14 @@
     let currentTab = 'single';
     let currentOp = 'add';
     let powerMode = 'pow';
+    let isAnimating = false;
+    let animReq = null;
 
     const canvas = document.getElementById('complexCanvas');
     const ctx = canvas.getContext('2d');
+    const scale = 50;
+
+    let activeDrag = null;
 
     function getSuperscript(num) {
       const superscripts = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
@@ -260,9 +264,55 @@
 
     function exportCanvas() {
       const link = document.createElement('a');
-      link.download = 'numero_complexo_plano.png';
+      link.download = 'abordagem_corpo_numeros_complexos_matrizes.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
+    }
+
+    function toggleAnimation() {
+      isAnimating = !isAnimating;
+      const btn = document.getElementById('btn-toggle-anim');
+      btn.classList.toggle('active', isAnimating);
+      btn.innerText = isAnimating ? '⏸ Pausar' : '▶ Animar Rotação';
+
+      if (isAnimating) {
+        animateLoop();
+      } else if (animReq) {
+        cancelAnimationFrame(animReq);
+      }
+    }
+
+    function animateLoop() {
+      if (!isAnimating) return;
+
+      const speed = 0.015;
+      if (currentTab === 'single') {
+        const a = parseFloat(document.getElementById('inp-a').value);
+        const b = parseFloat(document.getElementById('inp-b').value);
+        const r = Math.hypot(a, b) || 1;
+        let theta = Math.atan2(b, a) + speed;
+        document.getElementById('inp-a').value = (r * Math.cos(theta)).toFixed(1);
+        document.getElementById('inp-b').value = (r * Math.sin(theta)).toFixed(1);
+        updateSingle();
+      } else if (currentTab === 'ops') {
+        const a1 = parseFloat(document.getElementById('inp-a1').value);
+        const b1 = parseFloat(document.getElementById('inp-b1').value);
+        const r = Math.hypot(a1, b1) || 1;
+        let theta = Math.atan2(b1, a1) + speed;
+        document.getElementById('inp-a1').value = (r * Math.cos(theta)).toFixed(1);
+        document.getElementById('inp-b1').value = (r * Math.sin(theta)).toFixed(1);
+        updateOps();
+      } else if (currentTab === 'powers') {
+        const ap = parseFloat(document.getElementById('inp-ap').value);
+        const bp = parseFloat(document.getElementById('inp-bp').value);
+        const r = Math.hypot(ap, bp) || 1;
+        let theta = Math.atan2(bp, ap) + speed;
+        document.getElementById('inp-ap').value = (r * Math.cos(theta)).toFixed(1);
+        document.getElementById('inp-bp').value = (r * Math.sin(theta)).toFixed(1);
+        updatePowers();
+      }
+
+      animReq = requestAnimationFrame(animateLoop);
     }
 
     function setTab(tab) {
@@ -324,8 +374,7 @@
       if (mod > 0) {
         const invA = a / (mod * mod);
         const invB = -b / (mod * mod);
-        const invSign = invB >= 0 ? '+' : '-';
-        document.getElementById('single-inv').innerText = `${invA.toFixed(2)} ${invSign} ${Math.abs(invB).toFixed(2)}i`;
+        document.getElementById('single-inv').innerText = `${invA.toFixed(2)} ${invB >= 0 ? '+' : '-'} ${Math.abs(invB).toFixed(2)}i`;
       } else {
         document.getElementById('single-inv').innerText = 'Indefinido';
       }
@@ -345,33 +394,15 @@
       document.getElementById('lbl-b2').innerText = b2.toFixed(1);
 
       let ra = 0, rb = 0;
-      if (currentOp === 'add') {
-        ra = a1 + a2; rb = b1 + b2;
-        document.getElementById('op-expl-1').innerText = "Regra do Paralelogramo (Soma Vetorial)";
-        document.getElementById('op-expl-2').innerText = `z₁ + z₂ = (${a1.toFixed(1)}+${a2.toFixed(1)}) + (${b1.toFixed(1)}+${b2.toFixed(1)})i`;
-      } else if (currentOp === 'sub') {
-        ra = a1 - a2; rb = b1 - b2;
-        document.getElementById('op-expl-1').innerText = "Diferença Vetorial: z₁ + (-z₂)";
-        document.getElementById('op-expl-2').innerText = `z₁ - z₂ = (${a1.toFixed(1)}-${a2.toFixed(1)}) + (${b1.toFixed(1)}-${b2.toFixed(1)})i`;
-      } else if (currentOp === 'mul') {
-        ra = a1 * a2 - b1 * b2;
-        rb = a1 * b2 + a2 * b1;
-        const r1 = Math.hypot(a1, b1), r2 = Math.hypot(a2, b2);
-        document.getElementById('op-expl-1').innerText = `Multiplicação: |z_R| = ${(r1*r2).toFixed(2)}`;
-        document.getElementById('op-expl-2').innerText = `Argumentos se somam: θ_R = θ₁ + θ₂`;
-      } else if (currentOp === 'div') {
+      if (currentOp === 'add') { ra = a1 + a2; rb = b1 + b2; }
+      else if (currentOp === 'sub') { ra = a1 - a2; rb = b1 - b2; }
+      else if (currentOp === 'mul') { ra = a1 * a2 - b1 * b2; rb = a1 * b2 + a2 * b1; }
+      else if (currentOp === 'div') {
         const denom = a2*a2 + b2*b2;
-        if (denom > 0) {
-          ra = (a1*a2 + b1*b2) / denom;
-          rb = (b1*a2 - a1*b2) / denom;
-        }
-        const r1 = Math.hypot(a1, b1), r2 = Math.hypot(a2, b2);
-        document.getElementById('op-expl-1').innerText = `Divisão: |z_R| = ${(r2>0 ? r1/r2 : 0).toFixed(2)}`;
-        document.getElementById('op-expl-2').innerText = `Argumentos se subtraem: θ_R = θ₁ - θ₂`;
+        if (denom > 0) { ra = (a1*a2 + b1*b2) / denom; rb = (b1*a2 - a1*b2) / denom; }
       }
 
-      const sign = rb >= 0 ? '+' : '-';
-      document.getElementById('op-res-val').innerText = `${ra.toFixed(2)} ${sign} ${Math.abs(rb).toFixed(2)}i`;
+      document.getElementById('op-res-val').innerText = `${ra.toFixed(2)} ${rb >= 0 ? '+' : '-'} ${Math.abs(rb).toFixed(2)}i`;
 
       let radR = Math.atan2(rb, ra);
       let degR = radR * (180 / Math.PI);
@@ -397,28 +428,16 @@
       document.getElementById('lbl-bp').innerText = bp.toFixed(1);
       document.getElementById('lbl-n').innerText = n;
 
-      let radP = Math.atan2(bp, ap);
-      let degP = radP * (180 / Math.PI);
-      if (degP < 0) degP += 360;
-      document.getElementById('pow-arg').innerText = `${degP.toFixed(1)}° (${radP.toFixed(2)} rad)`;
-
       const mod = Math.hypot(ap, bp);
+      const radP = Math.atan2(bp, ap);
+
       let targetA = 0, targetB = 0;
-
       if (powerMode === 'pow') {
-        document.getElementById('pow-formula-1').innerText = `Fórmula de De Moivre: zⁿ = rⁿ [cos(nθ) + i sin(nθ)]`;
-        document.getElementById('pow-formula-2').innerText = `Exibindo sequência de z¹ a z${getSuperscript(n)}`;
-        document.getElementById('pow-mat-title').innerText = `z${getSuperscript(n)}`;
-
         const modN = Math.pow(mod, n);
         const thetaN = radP * n;
         targetA = modN * Math.cos(thetaN);
         targetB = modN * Math.sin(thetaN);
       } else {
-        document.getElementById('pow-formula-1').innerText = `Raízes n-ésimas: w_k = ⁿ√r e^(i(θ + 2kπ)/n)`;
-        document.getElementById('pow-formula-2').innerText = `Exibindo as ${n} raízes dispostas no polígono`;
-        document.getElementById('pow-mat-title').innerText = `w₀`;
-
         const rRoot = Math.pow(mod, 1 / n);
         const theta0 = radP / n;
         targetA = rRoot * Math.cos(theta0);
@@ -435,11 +454,76 @@
       draw();
     }
 
+    // INTERATIVIDADE DE ARRASTO NO CANVAS
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      const valX = (mouseX - cx) / scale;
+      const valY = (cy - mouseY) / scale;
+      return { x: mouseX, y: mouseY, valX, valY };
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      const { x, y, valX, valY } = getCanvasCoords(e);
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      const checkHit = (a, b) => Math.hypot(x - (cx + a * scale), y - (cy - b * scale)) < 15;
+
+      if (currentTab === 'single') {
+        const a = parseFloat(document.getElementById('inp-a').value);
+        const b = parseFloat(document.getElementById('inp-b').value);
+        if (checkHit(a, b)) activeDrag = 'z';
+      } else if (currentTab === 'ops') {
+        const a1 = parseFloat(document.getElementById('inp-a1').value);
+        const b1 = parseFloat(document.getElementById('inp-b1').value);
+        const a2 = parseFloat(document.getElementById('inp-a2').value);
+        const b2 = parseFloat(document.getElementById('inp-b2').value);
+        if (checkHit(a1, b1)) activeDrag = 'z1';
+        else if (checkHit(a2, b2)) activeDrag = 'z2';
+      } else if (currentTab === 'powers') {
+        const ap = parseFloat(document.getElementById('inp-ap').value);
+        const bp = parseFloat(document.getElementById('inp-bp').value);
+        if (checkHit(ap, bp)) activeDrag = 'zp';
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      const { valX, valY } = getCanvasCoords(e);
+      canvas.style.cursor = activeDrag ? 'grabbing' : 'crosshair';
+
+      if (!activeDrag) return;
+
+      const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+
+      if (activeDrag === 'z') {
+        document.getElementById('inp-a').value = clamp(valX, -5, 5).toFixed(1);
+        document.getElementById('inp-b').value = clamp(valY, -5, 5).toFixed(1);
+        updateSingle();
+      } else if (activeDrag === 'z1') {
+        document.getElementById('inp-a1').value = clamp(valX, -5, 5).toFixed(1);
+        document.getElementById('inp-b1').value = clamp(valY, -5, 5).toFixed(1);
+        updateOps();
+      } else if (activeDrag === 'z2') {
+        document.getElementById('inp-a2').value = clamp(valX, -5, 5).toFixed(1);
+        document.getElementById('inp-b2').value = clamp(valY, -5, 5).toFixed(1);
+        updateOps();
+      } else if (activeDrag === 'zp') {
+        document.getElementById('inp-ap').value = clamp(valX, -3, 3).toFixed(1);
+        document.getElementById('inp-bp').value = clamp(valY, -3, 3).toFixed(1);
+        updatePowers();
+      }
+    });
+
+    window.addEventListener('mouseup', () => { activeDrag = null; });
+
     function drawAngleArc(cx, cy, radius, startAngle, endAngle, color) {
       ctx.strokeStyle = color;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      // Canvas inverte eixo Y
       ctx.arc(cx, cy, radius, -startAngle, -endAngle, startAngle < endAngle);
       ctx.stroke();
     }
@@ -448,7 +532,6 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
-      const scale = 50;
 
       // Grade
       ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
@@ -575,6 +658,11 @@
       ctx.moveTo(px, py);
       ctx.lineTo(px - headLen * Math.cos(angle - Math.PI / 6), py - headLen * Math.sin(angle - Math.PI / 6));
       ctx.lineTo(px - headLen * Math.cos(angle + Math.PI / 6), py - headLen * Math.sin(angle + Math.PI / 6));
+      ctx.fill();
+
+      // Ponto interativo
+      ctx.beginPath();
+      ctx.arc(px, py, 5, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.font = 'bold 13px sans-serif';
